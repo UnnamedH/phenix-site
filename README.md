@@ -3,6 +3,10 @@
 Leaderboard for the troop's 2026–2027 *cadre symbolique*: four families (patrols) compete for the throne of Phoenixia.
 A plain static site (HTML, CSS and JS) with no build step and no server.
 
+## Maintenance mode
+
+In `config.js`, `MAINTENANCE: true` sends every visitor to `maintenance.html` ("the kingdom is under construction"). Set it to `false` to show the real site. That is the only line to change.
+
 ## Updating the scores
 
 **Option A: edit the JSON (the default).** Change the numbers in `data/patrols.json`, set `updated` to today's date, then commit.

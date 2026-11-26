@@ -342,3 +342,16 @@ h1 {
   .bar-fill { transition: none; }
   .blink { animation: none; }
 }
+
+/* ── Maintenance page ─────────────────────── */
+.maint { --fade: 0.45; }
+.maint .hero { min-height: 40svh; }
+.build { max-width: 40rem; margin-left: auto; margin-right: auto; }
+.build h2 { text-wrap: balance; }
+.build-bar { margin-top: 1.5rem; }
+.build-label { margin: 0 0 0.4rem; font-size: 0.95rem; color: var(--ink-soft); }
+.build-bar .bar-fill { animation: building 3s steps(10, end) infinite alternate; }
+@keyframes building { from { transform: scaleX(0.4); } to { transform: scaleX(0.8); } }
+@media (prefers-reduced-motion: reduce) {
+  .build-bar .bar-fill { animation: none; }
+}

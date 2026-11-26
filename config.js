@@ -8,6 +8,10 @@
 // finds the column holding the family names, uses the row just above the first
 // family as headers, and matches each header to a criterion's id, label or one of
 // its "aliases" in data/patrols.json (e.g. "TH" → Town Hall).
+//
+// MAINTENANCE: true  -> every visitor sees maintenance.html ("under construction").
+// MAINTENANCE: false -> the real site is shown. This is the only line to change.
 window.PHENIX_CONFIG = {
+  MAINTENANCE: true,
   SHEET_CSV_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSD6tptKOhuJO5oUHgJJbymDGy5cfYD1EtD81MA3H15zadHV5sVawHeY4-f_P-w_w/pub?gid=232632100&single=true&output=csv"
 };

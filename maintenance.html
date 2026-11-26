@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>En construction · Le Trône de Phoenixia</title>
+  <meta name="description" content="Le royaume de Phoenixia est en construction. Revenez bientôt !">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#4a8fdc">
+  <link rel="icon" href="images/logo/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="images/logo/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="maint">
+  <canvas id="kingdom" class="kingdom" aria-hidden="true"></canvas>
+  <div class="veil" aria-hidden="true"></div>
+
+  <header class="hero">
+    <div class="sign">
+      <img class="logo" src="images/logo/phenix-mark-192.png" width="72" height="72" alt="Troupe Phénix" fetchpriority="high">
+      <div class="sign-text">
+        <p class="sign-eyebrow"><span>Troupe Phénix</span> · <span>2026–2027</span></p>
+        <h1 translate="no">Le Trône de Phoenixia</h1>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="panel build" aria-labelledby="build-title">
+      <h2 id="build-title">Le royaume est en construction</h2>
+      <div class="dialog">
+        <p class="dialog-name">Le héraut du royaume</p>
+        <p>Chers sujets, nos bâtisseurs sont à l’œuvre&nbsp;: le château est en train de s’élever.</p>
+        <p class="dialog-more">Revenez bientôt&nbsp;! <span class="blink" aria-hidden="true">▼</span></p>
+      </div>
+      <div class="build-bar" role="progressbar" aria-label="Construction du royaume">
+        <p class="build-label">Construction en cours…</p>
+        <div class="bar" style="--c:#e0a526"><div class="bar-fill" style="--p:.6"></div></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <p translate="no">Royaume de Phoenixia</p>
+  </footer>
+
+  <script src="kingdom.js"></script>
+  <script>
+    PhenixArt.paintKingdom(document.getElementById("kingdom"), ["#d83a2e", "#8e4ec6", "#2f7fe0", "#2fa84f"]);
+  </script>
+</body>
+</html>
