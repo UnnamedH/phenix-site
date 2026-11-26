@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Le Trône de Phoenixia</title>
   <meta name="description" content="Classement des quatre familles qui se disputent le trône de Phoenixia.">
-  <meta name="theme-color" content="#3a2a1e">
+  <meta name="theme-color" content="#4a8fdc">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://docs.google.com">
@@ -14,50 +14,55 @@
 </head>
 <body>
   <a class="skip" href="#main">Aller au classement</a>
+  <canvas id="kingdom" class="kingdom" aria-hidden="true"></canvas>
 
-  <header class="top">
-    <div class="wrap">
-      <p class="eyebrow">Cadre symbolique 2026–2027</p>
-      <h1><span translate="no">Le Trône de Phoenixia</span></h1>
+  <header class="hero">
+    <div class="sign">
+      <p class="sign-eyebrow">Cadre symbolique 2026–2027</p>
+      <h1 translate="no">Le Trône de Phoenixia</h1>
     </div>
   </header>
 
-  <main id="main" class="wrap">
-    <section aria-labelledby="throne-title">
-      <h2 id="throne-title" class="sr-only">La salle du trône</h2>
-      <figure class="scene-frame">
-        <div id="scene" class="scene"></div>
-        <figcaption id="throne" class="scene-caption" aria-live="polite">Chargement…</figcaption>
-      </figure>
-    </section>
-
-    <section aria-labelledby="board-title">
-      <h2 id="board-title">Les familles</h2>
-      <ol id="sheets" class="sheets"></ol>
-      <p id="updated" class="updated"></p>
-    </section>
-
-    <section aria-labelledby="criteria-title">
-      <h2 id="criteria-title">Comment gagner des points</h2>
-      <ul id="criteria" class="quests"></ul>
-    </section>
-
-    <section aria-labelledby="story-title">
-      <h2 id="story-title">L’histoire</h2>
-      <div class="dialog">
-        <p class="dialog-name">Le héraut du royaume</p>
-        <p>
-          Le Roi de <span translate="no">Phoenixia</span> est mort sans désigner de successeur.
-          Avant de s’éteindre, il avait donné un nom à quatre familles&nbsp;:
-          <span translate="no">Robustina, Imposina, Virilina</span> et <span translate="no">Diligina</span>.
-        </p>
-        <p>
-          Depuis, les familles se disputent son trône. Celle qui prouvera sa valeur par son
-          <strong>Town Hall</strong>, ses <strong>Trophies</strong> et son <strong>Esprit</strong> s’y assiéra.
-        </p>
-        <p class="dialog-more">Une rumeur court au palais… <span class="blink" aria-hidden="true">▼</span></p>
+  <main id="main">
+    <section class="throne-wrap" aria-labelledby="throne-title">
+      <div class="throne-card">
+        <h2 id="throne-title" class="plaque">Le Trône</h2>
+        <canvas id="throne-art" class="throne-art" width="48" height="64" role="img" aria-label="Le trône royal"></canvas>
+        <p id="throne" class="throne-state" aria-live="polite">Chargement…</p>
+        <p class="throne-rule">Réservé à la famille qui complétera toutes ses statistiques.</p>
       </div>
     </section>
+
+    <div class="wrap">
+      <section class="panel" aria-labelledby="ranks-title">
+        <h2 id="ranks-title">Classement</h2>
+        <ol id="ranks" class="ranks"></ol>
+        <p id="updated" class="updated"></p>
+      </section>
+
+      <section class="panel" aria-labelledby="criteria-title">
+        <h2 id="criteria-title">Comment gagner des points</h2>
+        <ul id="criteria" class="quests"></ul>
+      </section>
+
+      <section class="panel" aria-labelledby="story-title">
+        <h2 id="story-title">L’histoire</h2>
+        <div class="dialog">
+          <p class="dialog-name">Le héraut du royaume</p>
+          <p>
+            Le Roi de <span translate="no">Phoenixia</span> est mort sans désigner de successeur.
+            Avant de s’éteindre, il avait donné un nom à quatre familles&nbsp;:
+            <span translate="no">Robustina, Imposina, Virilina</span> et <span translate="no">Diligina</span>.
+          </p>
+          <p>
+            Depuis, son trône reste vide. Seule la famille qui complétera toutes ses statistiques,
+            <strong>Town Hall</strong>, <strong>Trophies</strong>, <strong>Esprit</strong> et celles encore secrètes,
+            pourra s’y asseoir.
+          </p>
+          <p class="dialog-more">Une rumeur court au palais… <span class="blink" aria-hidden="true">▼</span></p>
+        </div>
+      </section>
+    </div>
   </main>
 
   <footer class="foot">
@@ -65,6 +70,7 @@
   </footer>
 
   <script src="config.js"></script>
+  <script src="kingdom.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

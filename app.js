@@ -20,11 +20,6 @@
     return node;
   }
 
-  // Family names are brand names: keep them out of automatic translation.
-  function nameSpan(name) {
-    return el("span", { translate: "no" }, name);
-  }
-
   // Minimal CSV parser (handles quoted fields, commas and newlines inside quotes).
   function parseCsv(text) {
     var rows = [], row = [], field = "", inQuotes = false;
@@ -121,229 +116,42 @@
     return list;
   }
 
-  // ── Pixel art ──────────────────────────────────────────────
-  // Sprites are drawn from strings: one character per pixel, "." = transparent.
-  var INK = "#2b1d14";
-
-  var KNIGHT = [
-    "....kkkk....",
-    "...khhhhk...",
-    "..khhhhhhk..",
-    "..khkkkkhk..",
-    "..khhhhhhk..",
-    "..kkkkkkkk..",
-    ".kcccccccck.",
-    "khcccggccchk",
-    "khccggggcchk",
-    "khcccggccchk",
-    "kkcccccccckk",
-    ".kddddddddk.",
-    "..kcccccck..",
-    "..khhkkhhk..",
-    "..khk..khk..",
-    "..kkk..kkk.."
-  ];
-
-  var THRONE = [
-    "...kk......kk...",
-    "..kggk....kggk..",
-    "..kgGkkkkkkGgk..",
-    "..kgGrrrrrrGgk..",
-    "..kgGrrrrrrGgk..",
-    "..kgGrrrrrrGgk..",
-    "..kgGrrrrrrGgk..",
-    "..kgGrrrrrrGgk..",
-    "..kgGrrrrrrGgk..",
-    ".kkgkkkkkkkkgkk.",
-    "kggggggggggggggk",
-    "kGGGGGGGGGGGGGGk",
-    ".kgGrrrrrrrrGgk.",
-    ".kgGrrrrrrrrGgk.",
-    ".kgkkkkkkkkkkgk.",
-    ".kgk........kgk.",
-    ".kgk........kgk.",
-    ".kGk........kGk.",
-    ".kkk........kkk."
-  ];
-
-  var CROWN = [
-    "g..g..g",
-    "gg.g.gg",
-    "ggggggg",
-    "grgggrg"
-  ];
-
-  var FLAME = [
-    "..y..",
-    ".yoy.",
-    ".ooo.",
-    "orroo",
-    ".ooo."
-  ];
-
-  var DIGITS = {
-    1: [".k.", "kk.", ".k.", ".k.", "kkk"],
-    2: ["kk.", "..k", ".k.", "k..", "kkk"],
-    3: ["kk.", "..k", ".k.", "..k", "kk."],
-    4: ["k.k", "k.k", "kkk", "..k", "..k"]
-  };
-
-  function shade(hex, f) {
-    var h = hex.replace("#", "");
-    if (h.length === 3) h = h.replace(/./g, "$&$&");
-    var n = parseInt(h.slice(0, 6), 16);
-    var r = Math.round(((n >> 16) & 255) * f), g = Math.round(((n >> 8) & 255) * f), b = Math.round((n & 255) * f);
-    return "rgb(" + Math.min(255, r) + "," + Math.min(255, g) + "," + Math.min(255, b) + ")";
-  }
-
-  function rect(x, y, w, h, fill) {
-    return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" fill="' + fill + '"/>';
-  }
-
-  // Draw a sprite, merging horizontal runs of the same colour into one rect.
-  function sprite(rows, pal, x, y) {
-    var out = "";
-    rows.forEach(function (row, j) {
-      var i = 0;
-      while (i < row.length) {
-        var ch = row[i], k = i;
-        while (k < row.length && row[k] === ch) k++;
-        if (ch !== "." && pal[ch]) out += rect(x + i, y + j, k - i, 1, pal[ch]);
-        i = k;
-      }
-    });
-    return out;
-  }
-
-  function knightPal(color) {
-    return { k: INK, h: "#c9ced6", c: color, d: shade(color, 0.6), g: "#ffd86b" };
-  }
+  var Art = window.PhenixArt;
 
   function colorOf(p) {
     return /^#[0-9a-f]{3}([0-9a-f]{3})?$/i.test(p.color || "") ? p.color : "#e0a526";
   }
 
-  function banner(x, y, w, h, color, withCrown) {
-    var s = rect(x - 1, y, w + 2, 1, "#e0a526") + rect(x, y + 1, w, h - 3, color) +
-      rect(x, y + 1, 1, h - 3, shade(color, 0.75));
-    // pointed bottom
-    for (var j = 0; j < 3; j++) {
-      var inset = j + 1;
-      s += rect(x, y + h - 2 + j - 1, Math.floor(w / 2) - inset + 1, 1, color);
-      s += rect(x + Math.ceil(w / 2) + inset - 1, y + h - 2 + j - 1, Math.floor(w / 2) - inset + 1, 1, color);
-    }
-    if (withCrown) s += sprite(CROWN, { g: "#ffd86b", r: "#b83a2b" }, x + Math.floor((w - 7) / 2), y + 8);
-    else s += rect(x + Math.floor(w / 2) - 1, y + 6, 2, 2, "#ffd86b");
-    return s;
+  // ── Kingdom background ─────────────────────────────────────
+  // Paint once with the default family colours (so the flags are there
+  // immediately), then repaint with the colours from the data.
+  function paintKingdom(patrols) {
+    var canvas = document.getElementById("kingdom");
+    var colors = ["#d83a2e", "#8e4ec6", "#2f7fe0", "#2fa84f"];
+    (patrols || []).slice(0, 4).forEach(function (p, i) { if (p) colors[i] = colorOf(p); });
+    if (Art && canvas) Art.paintKingdom(canvas, colors);
   }
 
-  function block(x, y, w, h) {
-    return rect(x, y, w, h, INK) + rect(x + 1, y + 1, w - 2, h - 1, "#9aa1ae") +
-      rect(x + 1, y + 1, w - 2, 1, "#c8cdd6") + rect(x + 1, y + 4, w - 2, 1, "#7d8494");
-  }
+  // ── Throne ─────────────────────────────────────────────────
+  // The throne stays empty until data.throne names a family.
+  function renderThrone(list, data) {
+    var holderName = String(data.throne || "").trim();
+    var holder = list.filter(function (p) { return norm(p.name) === norm(holderName); })[0];
+    var art = document.getElementById("throne-art");
+    if (Art) Art.paintThrone(art, holder ? colorOf(holder) : null);
+    art.setAttribute("aria-label", holder ? "Le trône royal, aux couleurs de " + holder.name : "Le trône royal, vide");
 
-  // Spots where the families appear: [x, y of the sprite's top-left].
-  var SPOT = {
-    throne: [74, 33], podL: [28, 54], podR: [120, 60],
-    floorR: [143, 76], floorL: [5, 76], floorA: [26, 74], floorB: [46, 74], floorC: [102, 74], floorD: [122, 74]
-  };
-
-  function buildScene(list) {
-    var W = 160, H = 96;
-    var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="scene-desc">' +
-      '<desc id="scene-desc"></desc>' +
-      '<defs>' +
-      '<pattern id="brick" width="16" height="8" patternUnits="userSpaceOnUse">' +
-        rect(0, 0, 16, 8, "#7d8494") + rect(0, 3, 16, 1, "#666c7a") + rect(0, 7, 16, 1, "#666c7a") +
-        rect(7, 0, 1, 3, "#666c7a") + rect(15, 4, 1, 3, "#666c7a") + rect(0, 0, 7, 1, "#8b92a1") + rect(8, 4, 7, 1, "#8b92a1") +
-      '</pattern>' +
-      '<pattern id="tile" width="16" height="8" patternUnits="userSpaceOnUse">' +
-        rect(0, 0, 8, 4, "#9b7b5a") + rect(8, 0, 8, 4, "#8a6b4c") + rect(0, 4, 8, 4, "#8a6b4c") + rect(8, 4, 8, 4, "#9b7b5a") +
-      '</pattern>' +
-      '</defs>';
-
-    // room
-    svg += rect(0, 0, W, 64, "url(#brick)") + rect(0, 64, W, H - 64, "url(#tile)");
-    svg += rect(0, 0, W, 3, "#3a2a1e") + rect(0, 3, W, 1, INK) + rect(0, 63, W, 1, INK);
-    // carpet
-    svg += rect(70, 56, 20, 40, "#a3262a") + rect(70, 56, 1, 40, "#e0a526") + rect(89, 56, 1, 40, "#e0a526");
-
-    var top = list[0];
-    var holder = top && top.value > 0 && !(list[1] && list[1].value === top.value) ? top : null;
-
-    // big banner behind the throne, in the ruler's colour
-    svg += banner(68, 4, 24, 30, holder ? colorOf(holder) : "#6d6470", true);
-    // the four family banners on the walls
-    var walls = [8, 22, 130, 144];
-    list.slice().sort(function (a, b) { return a.order - b.order; }).slice(0, 4).forEach(function (p, i) {
-      svg += banner(walls[i], 4, 9, 20, colorOf(p), false);
-    });
-    // torches
-    [54, 102].forEach(function (x) {
-      svg += rect(x + 1, 30, 3, 6, "#5a3d26") + rect(x + 1, 30, 3, 1, INK) +
-        sprite(FLAME, { y: "#fff3a8", o: "#ffa726", r: "#e5532d" }, x, 25);
-    });
-
-    // dais and podiums
-    svg += block(54, 56, 52, 8) + block(60, 50, 40, 7);
-    svg += sprite(THRONE, { k: INK, g: "#e0a526", G: "#a8741a", r: "#b83a2b" }, 72, 31);
-
-    var spots;
-    if (holder) spots = ["throne", "podL", "podR", "floorR"];
-    else if (top && top.value > 0) spots = ["podL", "podR", "floorR", "floorL"];
-    else spots = ["floorA", "floorB", "floorC", "floorD"];
-
-    if (spots[0] !== "floorA") {
-      svg += block(24, 70, 20, 26) + block(116, 76, 20, 20);
-    }
-
-    list.slice(0, spots.length).forEach(function (p, i) {
-      var at = SPOT[spots[i]];
-      svg += sprite(KNIGHT, knightPal(colorOf(p)), at[0], at[1]);
-      if (spots[i] === "throne") svg += sprite(CROWN, { g: "#ffd86b", r: "#b83a2b" }, at[0] + 3, at[1] - 5);
-      var d = DIGITS[p.rank];
-      if (d && spots[i] === "podL") svg += sprite(d, { k: INK }, 33, 80);
-      if (d && spots[i] === "podR") svg += sprite(d, { k: INK }, 125, 83);
-      if (d && spots[i] === "throne") svg += sprite(d, { k: INK }, 79, 51);
-    });
-
-    return { svg: svg + "</svg>", holder: holder };
-  }
-
-  function sceneLabel(list, holder) {
-    if (!list.length || list[0].value === 0) return "Salle du trône : le trône est vide, les quatre familles attendent.";
-    return "Salle du trône : " + list.map(function (p, i) {
-      return p.name + (holder && i === 0 ? " sur le trône" : " au rang " + p.rank);
-    }).join(", ") + ".";
-  }
-
-  function renderThrone(list) {
-    var scene = buildScene(list);
-    var box = document.getElementById("scene");
-    box.innerHTML = scene.svg;
-    box.querySelector("desc").textContent = sceneLabel(list, scene.holder);
-
-    var cap = document.getElementById("throne");
-    cap.textContent = "";
-    var top = list[0];
-    if (!top || top.value === 0) {
-      cap.textContent = "Le trône est vacant. Que la compétition commence !";
-    } else if (!scene.holder) {
-      var tied = list.filter(function (p) { return p.rank === 1; });
-      cap.appendChild(document.createTextNode("Égalité ! "));
-      tied.forEach(function (p, i) {
-        if (i) cap.appendChild(document.createTextNode(" & "));
-        cap.appendChild(el("strong", { translate: "no" }, p.name));
-      });
-      cap.appendChild(document.createTextNode(" se disputent le trône."));
+    var state = document.getElementById("throne");
+    state.textContent = "";
+    if (holder) {
+      state.appendChild(el("span", { translate: "no" }, holder.name));
+      state.appendChild(document.createTextNode(" règne sur Phoenixia"));
     } else {
-      cap.appendChild(withIcon("♛", ""));
-      cap.appendChild(el("strong", { translate: "no" }, top.name));
-      cap.appendChild(document.createTextNode(" règne sur Phoenixia"));
+      state.textContent = "Le trône est vide";
     }
   }
 
-  // ── Family sheets ──────────────────────────────────────────
+  // ── Ranking ────────────────────────────────────────────────
   // Bar scale per criterion: its "max" from the data file if set, otherwise the
   // best score among the families (so the leader in that criterion fills the bar).
   function scaleFor(c, list) {
@@ -351,46 +159,46 @@
     return list.reduce(function (m, p) { return Math.max(m, toNumber(p.scores[c.id])); }, 0);
   }
 
-  function portrait(p, eager) {
-    var box = el("div", { "class": "portrait" });
-    box.innerHTML = '<svg viewBox="0 0 12 16" aria-hidden="true">' + sprite(KNIGHT, knightPal(colorOf(p)), 0, 0) + "</svg>";
-    if (p.image) {
-      var img = el("img", { src: p.image, alt: "Emblème de la famille " + p.name, width: "72", height: "72", decoding: "async" });
-      if (eager) img.setAttribute("fetchpriority", "high"); else img.setAttribute("loading", "lazy");
-      img.hidden = true;
-      img.addEventListener("load", function () { box.textContent = ""; img.hidden = false; box.appendChild(img); });
-      box.appendChild(img);
-    }
-    return box;
+  function crest(p, eager) {
+    var canvas = el("canvas", { "class": "crest", "aria-hidden": "true" });
+    if (Art) Art.paintCrest(canvas, colorOf(p));
+    if (!p.image) return canvas;
+    var img = el("img", { "class": "crest-img", src: p.image, alt: "", width: "48", height: "48", decoding: "async" });
+    if (eager) img.setAttribute("fetchpriority", "high"); else img.setAttribute("loading", "lazy");
+    img.hidden = true;
+    img.addEventListener("load", function () { img.hidden = false; canvas.remove(); });
+    img.addEventListener("error", function () { img.remove(); });
+    var frag = document.createDocumentFragment();
+    frag.appendChild(canvas);
+    frag.appendChild(img);
+    return frag;
   }
 
-  function ordinal(n) { return n === 1 ? "1er" : n + "e"; }
+  function ordinal(n) { return n === 1 ? "1re place" : n + "e place"; }
 
-  function renderSheets(list, data, holder) {
-    var ol = document.getElementById("sheets");
+  function renderRanks(list, data) {
+    var ol = document.getElementById("ranks");
     ol.textContent = "";
     var scales = {};
     data.criteria.forEach(function (c) { if (!c.locked) scales[c.id] = scaleFor(c, list); });
     var unit = data.ranking === "average" ? "moyenne" : "points";
+    var started = list[0] && list[0].value > 0;
     var fills = [];
 
     list.forEach(function (p, i) {
-      var onThrone = holder && p === holder;
-      var li = el("li", { "class": "sheet px" + (onThrone ? " leader" : "") });
+      var li = el("li", { "class": "rank" });
       li.style.setProperty("--c", colorOf(p));
 
-      var head = el("div", { "class": "sheet-head" });
-      head.appendChild(portrait(p, i < 2));
-      var title = el("div", { "class": "sheet-title" });
-      title.appendChild(el("h3", { "class": "sheet-name", translate: "no" }, p.name));
-      var started = list[0] && list[0].value > 0;
-      title.appendChild(el("p", { "class": "sheet-rank" },
-        !started ? "En attente" : onThrone ? "♛ Sur le trône" : ordinal(p.rank) + " place"));
-      head.appendChild(title);
-      var total = el("p", { "class": "sheet-total" }, nf.format(p.value));
+      li.appendChild(el("p", { "class": "rank-num", "aria-hidden": "true" }, started ? String(p.rank) : "–"));
+      li.appendChild(crest(p, i < 2));
+      var name = el("div", { "class": "rank-name" });
+      name.appendChild(el("h3", { translate: "no" }, p.name));
+      var tied = list.filter(function (q) { return q.rank === p.rank; }).length > 1;
+      name.appendChild(el("p", null, !started ? "En attente" : ordinal(p.rank) + (tied ? " (ex æquo)" : "")));
+      li.appendChild(name);
+      var total = el("p", { "class": "rank-total" }, nf.format(p.value));
       total.appendChild(el("small", null, unit));
-      head.appendChild(total);
-      li.appendChild(head);
+      li.appendChild(total);
 
       var ul = el("ul", { "class": "stats" });
       data.criteria.forEach(function (c) {
@@ -440,7 +248,7 @@
     var ul = document.getElementById("criteria");
     ul.textContent = "";
     data.criteria.forEach(function (c) {
-      var li = el("li", { "class": "quest px" + (c.locked ? " locked" : "") });
+      var li = el("li", { "class": "quest" + (c.locked ? " locked" : "") });
       var name = el("span", { "class": "quest-name" });
       name.appendChild(withIcon(c.locked ? "🔒" : "", c.locked ? "???" : c.label));
       if (c.locked) name.appendChild(el("span", { "class": "sr-only" }, " (critère verrouillé)"));
@@ -452,16 +260,22 @@
 
   function render(data) {
     var list = rank(data);
-    var holder = list[0] && list[0].value > 0 && !(list[1] && list[1].value === list[0].value) ? list[0] : null;
-    renderThrone(list);
-    renderSheets(list, data, holder);
+    paintKingdom(data.patrols);
+    renderThrone(list, data);
+    renderRanks(list, data);
     renderCriteria(data);
   }
 
   function showError() {
-    document.getElementById("throne").textContent =
-      "Impossible de charger le classement. Vérifiez votre connexion puis rechargez la page.";
+    document.getElementById("throne").textContent = "Le trône est vide";
+    var ol = document.getElementById("ranks");
+    ol.textContent = "";
+    ol.appendChild(el("li", { "class": "quest" },
+      "Impossible de charger le classement. Vérifiez votre connexion puis rechargez la page."));
   }
+
+  paintKingdom();
+  if (Art) Art.paintThrone(document.getElementById("throne-art"), null);
 
   var cfg = window.PHENIX_CONFIG || {};
   fetch("data/patrols.json", { cache: "no-cache" })

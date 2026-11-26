@@ -20,6 +20,7 @@ If the sheet can't be reached, the site falls back to `data/patrols.json`.
 
 ## Settings (in `data/patrols.json`)
 
+- `throne`: the family sitting on the throne (e.g. `"Imposina"`), or `null` to keep it empty. It is set by hand on purpose: the throne goes to the family that completes all its stats.
 - `ranking`: `"total"` or `"average"` of the criteria that are not locked.
 - `patrols[].color`: each family's colour (used for its knight, banner and bars) (hex, e.g. `"#d4553f"`).
 - `patrols[].image`: picture for each family's card (e.g. `images/phoenixia.jpg`). Square works best; it replaces the pixel knight on the family's card once the file exists.

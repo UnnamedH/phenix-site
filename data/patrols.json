@@ -1,6 +1,7 @@
 {
   "updated": "2026-11-26",
   "ranking": "total",
+  "throne": null,
   "criteria": [
     {
       "id": "townhall",
