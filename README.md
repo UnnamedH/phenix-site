@@ -5,7 +5,7 @@ A plain static site (HTML, CSS and JS) with no build step and no server.
 
 ## Maintenance mode
 
-In `config.js`, `MAINTENANCE: true` sends every visitor to `maintenance.html` ("the kingdom is under construction"). Set it to `false` to show the real site. That is the only line to change.
+In `config.js`, `MAINTENANCE: true` sends every visitor to `maintenance.html` ("Dear members, the kingdom is loading, please be patient!"). Set it to `false` to show the real site. That is the only line to change.
 
 ## Updating the scores
 
