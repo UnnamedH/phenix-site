@@ -2,16 +2,68 @@
   "updated": "2026-11-26",
   "ranking": "total",
   "criteria": [
-    { "id": "local", "label": "Local", "hint": "Hôtel de ville" },
-    { "id": "progression", "label": "Progression", "hint": "Trophées" },
-    { "id": "esprit", "label": "Esprit", "hint": "Esprit de famille" },
-    { "id": "c4", "label": "Critère 4", "locked": true },
-    { "id": "c5", "label": "Critère 5", "locked": true }
+    {
+      "id": "local",
+      "label": "Local",
+      "hint": "Hôtel de ville"
+    },
+    {
+      "id": "progression",
+      "label": "Progression",
+      "hint": "Trophées"
+    },
+    {
+      "id": "esprit",
+      "label": "Esprit",
+      "hint": "Esprit de famille"
+    },
+    {
+      "id": "c4",
+      "label": "Critère 4",
+      "locked": true
+    },
+    {
+      "id": "c5",
+      "label": "Critère 5",
+      "locked": true
+    }
   ],
   "patrols": [
-    { "name": "Phoenixia", "scores": { "local": 0, "progression": 0, "esprit": 0 } },
-    { "name": "Robustina", "scores": { "local": 0, "progression": 0, "esprit": 0 } },
-    { "name": "Virilina", "scores": { "local": 0, "progression": 0, "esprit": 0 } },
-    { "name": "Famille 4", "scores": { "local": 0, "progression": 0, "esprit": 0 } }
+    {
+      "name": "Phoenixia",
+      "image": "images/phoenixia.jpg",
+      "scores": {
+        "local": 0,
+        "progression": 0,
+        "esprit": 0
+      }
+    },
+    {
+      "name": "Robustina",
+      "image": "images/robustina.jpg",
+      "scores": {
+        "local": 0,
+        "progression": 0,
+        "esprit": 0
+      }
+    },
+    {
+      "name": "Virilina",
+      "image": "images/virilina.jpg",
+      "scores": {
+        "local": 0,
+        "progression": 0,
+        "esprit": 0
+      }
+    },
+    {
+      "name": "Famille 4",
+      "image": "images/famille-4.jpg",
+      "scores": {
+        "local": 0,
+        "progression": 0,
+        "esprit": 0
+      }
+    }
   ]
 }

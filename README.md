@@ -20,6 +20,8 @@ If the sheet can't be reached, the site falls back to `data/patrols.json`.
 ## Settings (in `data/patrols.json`)
 
 - `ranking`: `"total"` or `"average"` of the criteria that are not locked.
+- `patrols[].image`: picture for each family's card (e.g. `images/phoenixia.jpg`). Landscape works best (about 16:10); a large letter is shown until a picture is added.
+- `criteria[].max` (optional): the score that fills a bar completely, e.g. `"max": 100`. Without it, the family with the best score in that criterion has a full bar and the others are relative to it.
 - `criteria`: set `"locked": false` and give a new `label` to reveal criterion 4 or 5. Locked criteria never count toward the ranking.
 - Rename `"Famille 4"` once the fourth family's name is decided. If you use the sheet, rename it there too.
 

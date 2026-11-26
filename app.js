@@ -54,7 +54,8 @@
     var patrols = rows.slice(1).map(function (r) {
       var scores = {};
       for (var id in colFor) scores[id] = toNumber(r[colFor[id]]);
-      return { name: r[0].trim(), scores: scores };
+      var known = data.patrols.filter(function (q) { return norm(q.name) === norm(r[0]); })[0];
+      return { name: r[0].trim(), image: known && known.image, scores: scores };
     }).filter(function (p) { return p.name; });
     if (patrols.length) data.patrols = patrols;
     data.updated = null;
@@ -68,6 +69,7 @@
       var sum = active.reduce(function (s, c) { return s + toNumber((p.scores || {})[c.id]); }, 0);
       return {
         name: p.name,
+        image: p.image,
         scores: p.scores || {},
         value: useAverage && active.length ? sum / active.length : sum
       };
@@ -102,35 +104,85 @@
     box.appendChild(card);
   }
 
-  function renderTable(list, data) {
-    var table = document.getElementById("board");
-    var thead = table.tHead, tbody = table.tBodies[0];
-    thead.textContent = ""; tbody.textContent = "";
+  // Bar scale per criterion: its "max" from the data file if set, otherwise the
+  // best score among the families (so the leader in that criterion fills the bar).
+  function scaleFor(c, list) {
+    if (c.max > 0) return c.max;
+    return list.reduce(function (m, p) { return Math.max(m, toNumber(p.scores[c.id])); }, 0);
+  }
 
-    var hr = el("tr");
-    hr.appendChild(el("th", { scope: "col" }, "#"));
-    hr.appendChild(el("th", { scope: "col" }, "Famille"));
-    data.criteria.forEach(function (c) {
-      var th = el("th", { scope: "col" }, c.locked ? "🔒" : c.label);
-      if (c.locked) { th.className = "locked"; th.setAttribute("aria-label", c.label + " (verrouillé)"); th.title = "Bientôt"; }
-      hr.appendChild(th);
-    });
-    hr.appendChild(el("th", { scope: "col" }, data.ranking === "average" ? "Moyenne" : "Total"));
-    thead.appendChild(hr);
+  function media(p) {
+    var box = el("div", { "class": "card-media" });
+    var mono = el("span", { "class": "monogram", "aria-hidden": "true" }, p.name.charAt(0).toUpperCase());
+    box.appendChild(mono);
+    if (p.image) {
+      var img = el("img", { src: p.image, alt: "Emblème de la famille " + p.name, width: "640", height: "400", loading: "lazy", decoding: "async" });
+      img.addEventListener("error", function () { img.remove(); });
+      box.appendChild(img);
+    }
+    return box;
+  }
+
+  function renderCards(list, data) {
+    var ol = document.getElementById("cards");
+    ol.textContent = "";
+    var scales = {};
+    data.criteria.forEach(function (c) { if (!c.locked) scales[c.id] = scaleFor(c, list); });
+    var unit = data.ranking === "average" ? "moy." : "pts";
+    var fills = [];
 
     list.forEach(function (p) {
-      var tr = el("tr", p.rank === 1 && p.value > 0 ? { "class": "leader" } : null);
-      tr.appendChild(el("td", null, String(p.rank)));
-      tr.appendChild(el("th", { scope: "row", translate: "no" }, p.name));
+      var isLeader = p.rank === 1 && p.value > 0;
+      var li = el("li", { "class": "card" + (isLeader ? " leader" : "") });
+
+      var m = media(p);
+      m.appendChild(el("span", { "class": "rank", "aria-label": "Rang " + p.rank }, (isLeader ? "👑 " : "#") + p.rank));
+      li.appendChild(m);
+
+      var body = el("div", { "class": "card-body" });
+      var head = el("div", { "class": "card-head" });
+      head.appendChild(el("h3", { "class": "card-name", translate: "no" }, p.name));
+      var total = el("p", { "class": "card-total" }, nf.format(p.value) + " ");
+      total.appendChild(el("span", null, unit));
+      head.appendChild(total);
+      body.appendChild(head);
+
+      var stats = el("ul", { "class": "stats" });
       data.criteria.forEach(function (c) {
+        var item = el("li", { "class": "stat" + (c.locked ? " locked" : "") });
+        var row = el("div", { "class": "stat-row" });
+        row.appendChild(el("span", null, c.locked ? "🔒 " + c.label : c.label));
+        var v = toNumber(p.scores[c.id]);
+        var max = scales[c.id];
+        row.appendChild(el("span", null, c.locked ? "Bientôt" : nf.format(v) + (c.max > 0 ? " / " + nf.format(c.max) : "")));
+        item.appendChild(row);
+
+        var bar = el("div", { "class": "bar" });
         if (c.locked) {
-          tr.appendChild(el("td", { "class": "locked", "aria-label": "verrouillé" }, "—"));
+          bar.setAttribute("aria-hidden", "true");
         } else {
-          tr.appendChild(el("td", null, nf.format(toNumber(p.scores[c.id]))));
+          bar.setAttribute("role", "meter");
+          bar.setAttribute("aria-label", c.label + " — " + p.name);
+          bar.setAttribute("aria-valuemin", "0");
+          bar.setAttribute("aria-valuemax", String(max || 0));
+          bar.setAttribute("aria-valuenow", String(v));
+          var fill = el("div", { "class": "bar-fill" });
+          bar.appendChild(fill);
+          fills.push([fill, max > 0 ? Math.min(1, Math.max(0, v / max)) : 0]);
         }
+        item.appendChild(bar);
+        stats.appendChild(item);
       });
-      tr.appendChild(el("td", { "class": "total" }, nf.format(p.value)));
-      tbody.appendChild(tr);
+      body.appendChild(stats);
+      li.appendChild(body);
+      ol.appendChild(li);
+    });
+
+    // Grow the bars after the first paint.
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        fills.forEach(function (f) { f[0].style.setProperty("--p", f[1]); });
+      });
     });
 
     var updated = document.getElementById("updated");
@@ -155,7 +207,7 @@
   function render(data) {
     var list = rank(data);
     renderThrone(list, data);
-    renderTable(list, data);
+    renderCards(list, data);
     renderCriteria(data);
   }
 
