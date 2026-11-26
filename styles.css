@@ -47,7 +47,7 @@ body {
 }
 
 header.wrap { padding-top: 3.5rem; padding-bottom: 1.5rem; }
-.logo { display: block; width: 76px; height: 96px; margin-bottom: 1rem; }
+.logo { display: block; width: 96px; height: 96px; margin-bottom: 1rem; }
 footer.wrap { padding-top: 2rem; padding-bottom: 3rem; }
 
 h1, h2, h3, .throne-name { text-wrap: balance; }
