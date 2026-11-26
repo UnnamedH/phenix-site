@@ -11,6 +11,19 @@
     return node;
   }
 
+  // Decorative emoji are hidden from screen readers; the text next to them carries the meaning.
+  function withIcon(icon, text, attrs) {
+    var node = el("span", attrs || null);
+    if (icon) node.appendChild(el("span", { "aria-hidden": "true" }, icon + " "));
+    node.appendChild(document.createTextNode(text));
+    return node;
+  }
+
+  // Family names are brand names: keep them out of automatic translation.
+  function nameSpan(name) {
+    return el("span", { translate: "no" }, name);
+  }
+
   // Minimal CSV parser (handles quoted fields, commas and newlines inside quotes).
   function parseCsv(text) {
     var rows = [], row = [], field = "", inQuotes = false;
@@ -84,10 +97,12 @@
   function rank(data) {
     var active = data.criteria.filter(function (c) { return !c.locked; });
     var useAverage = data.ranking === "average";
-    var list = data.patrols.map(function (p) {
+    var list = (data.patrols || []).filter(function (p) {
+      return p && String(p.name || "").trim();
+    }).map(function (p) {
       var sum = active.reduce(function (s, c) { return s + toNumber((p.scores || {})[c.id]); }, 0);
       return {
-        name: p.name,
+        name: String(p.name).trim(),
         image: p.image,
         scores: p.scores || {},
         value: useAverage && active.length ? sum / active.length : sum
@@ -112,13 +127,20 @@
       card.appendChild(el("p", { "class": "throne-name" }, "Le trône est vacant"));
       card.appendChild(el("p", { "class": "throne-meta" }, "Aucun point n’a encore été attribué. Que la compétition commence."));
     } else if (leaders.length > 1) {
-      card.appendChild(el("p", { "class": "throne-name" }, leaders.map(function (p) { return p.name; }).join(" & ")));
+      var names = el("p", { "class": "throne-name" });
+      leaders.forEach(function (p, i) {
+        if (i) names.appendChild(document.createTextNode(" & "));
+        names.appendChild(nameSpan(p.name));
+      });
+      card.appendChild(names);
       card.appendChild(el("p", { "class": "throne-meta" }, "Égalité à " + nf.format(top.value) + " points. Le trône vacille."));
     } else {
       var gap = list[1] ? top.value - list[1].value : top.value;
-      card.appendChild(el("p", { "class": "throne-name" }, top.name));
-      card.appendChild(el("p", { "class": "throne-meta" },
-        nf.format(top.value) + " points · " + nf.format(gap) + " d’avance sur " + (list[1] ? list[1].name : "personne")));
+      card.appendChild(el("p", { "class": "throne-name", translate: "no" }, top.name));
+      var meta = el("p", { "class": "throne-meta" },
+        nf.format(top.value) + " points · " + nf.format(gap) + " d’avance sur ");
+      meta.appendChild(list[1] ? nameSpan(list[1].name) : document.createTextNode("personne"));
+      card.appendChild(meta);
     }
     box.appendChild(card);
   }
@@ -130,12 +152,14 @@
     return list.reduce(function (m, p) { return Math.max(m, toNumber(p.scores[c.id])); }, 0);
   }
 
-  function media(p) {
+  function media(p, aboveFold) {
     var box = el("div", { "class": "card-media" });
     var mono = el("span", { "class": "monogram", "aria-hidden": "true" }, p.name.charAt(0).toUpperCase());
     box.appendChild(mono);
     if (p.image) {
-      var img = el("img", { src: p.image, alt: "Emblème de la famille " + p.name, width: "640", height: "400", loading: "lazy", decoding: "async" });
+      var img = el("img", { src: p.image, alt: "Emblème de la famille " + p.name, width: "640", height: "400", decoding: "async" });
+      if (aboveFold) img.setAttribute("fetchpriority", "high");
+      else img.setAttribute("loading", "lazy");
       img.addEventListener("error", function () { img.remove(); });
       box.appendChild(img);
     }
@@ -150,12 +174,15 @@
     var unit = data.ranking === "average" ? "moy." : "pts";
     var fills = [];
 
-    list.forEach(function (p) {
+    list.forEach(function (p, i) {
       var isLeader = p.rank === 1 && p.value > 0;
       var li = el("li", { "class": "card" + (isLeader ? " leader" : "") });
 
-      var m = media(p);
-      m.appendChild(el("span", { "class": "rank", "aria-label": "Rang " + p.rank }, (isLeader ? "👑 " : "#") + p.rank));
+      var m = media(p, i < 2);
+      var badge = el("span", { "class": "rank" });
+      badge.appendChild(el("span", { "aria-hidden": "true" }, (isLeader ? "👑 " : "#") + p.rank));
+      badge.appendChild(el("span", { "class": "sr-only" }, "Rang " + p.rank + (isLeader ? ", sur le trône" : "")));
+      m.appendChild(badge);
       li.appendChild(m);
 
       var body = el("div", { "class": "card-body" });
@@ -170,7 +197,9 @@
       data.criteria.forEach(function (c) {
         var item = el("li", { "class": "stat" + (c.locked ? " locked" : "") });
         var row = el("div", { "class": "stat-row" });
-        row.appendChild(el("span", null, c.locked ? "🔒 " + c.label : c.label));
+        var label = withIcon(c.locked ? "🔒" : "", c.label);
+        if (c.locked) label.appendChild(el("span", { "class": "sr-only" }, " (verrouillé)"));
+        row.appendChild(label);
         var v = toNumber(p.scores[c.id]);
         var max = scales[c.id];
         row.appendChild(el("span", null, c.locked ? "Bientôt" : nf.format(v) + (c.max > 0 ? " / " + nf.format(c.max) : "")));
@@ -217,7 +246,7 @@
     ul.textContent = "";
     data.criteria.forEach(function (c) {
       var li = el("li", c.locked ? { "class": "locked" } : null);
-      li.appendChild(el("span", null, c.locked ? "🔒 " + c.label : c.label));
+      li.appendChild(withIcon(c.locked ? "🔒" : "", c.label));
       li.appendChild(el("span", null, c.locked ? "Révélé plus tard" : (c.hint || "")));
       ul.appendChild(li);
     });
