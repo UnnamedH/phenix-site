@@ -1,0 +1,17 @@
+{
+  "updated": "2026-11-26",
+  "ranking": "total",
+  "criteria": [
+    { "id": "local", "label": "Local", "hint": "Hôtel de ville" },
+    { "id": "progression", "label": "Progression", "hint": "Trophées" },
+    { "id": "esprit", "label": "Esprit", "hint": "Esprit de famille" },
+    { "id": "c4", "label": "Critère 4", "locked": true },
+    { "id": "c5", "label": "Critère 5", "locked": true }
+  ],
+  "patrols": [
+    { "name": "Phoenixia", "scores": { "local": 0, "progression": 0, "esprit": 0 } },
+    { "name": "Robustina", "scores": { "local": 0, "progression": 0, "esprit": 0 } },
+    { "name": "Virilina", "scores": { "local": 0, "progression": 0, "esprit": 0 } },
+    { "name": "Famille 4", "scores": { "local": 0, "progression": 0, "esprit": 0 } }
+  ]
+}

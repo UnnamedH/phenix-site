@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Le Trône de Phoenixia</title>
+  <meta name="description" content="Classement des quatre familles qui se disputent le trône de Phoenixia.">
+  <meta name="theme-color" content="#fbfaf7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#151412" media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip" href="#main">Aller au classement</a>
+
+  <header class="wrap">
+    <p class="eyebrow">Cadre symbolique 2026–2027</p>
+    <h1><span translate="no">Le Trône de Phoenixia</span></h1>
+    <p class="lede">
+      Le Roi de <span translate="no">Phoenixia</span> est mort sans désigner de successeur.
+      Quatre familles se disputent le trône. La famille aux meilleures statistiques le prendra.
+    </p>
+  </header>
+
+  <main id="main" class="wrap">
+    <section aria-labelledby="throne-title" class="throne">
+      <h2 id="throne-title">Sur le trône</h2>
+      <div id="throne" aria-live="polite">
+        <p class="muted">Chargement…</p>
+      </div>
+    </section>
+
+    <section aria-labelledby="board-title">
+      <h2 id="board-title">Classement</h2>
+      <div class="table-scroll">
+        <table id="board">
+          <caption class="sr-only">Statistiques des quatre familles</caption>
+          <thead></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p id="updated" class="muted small"></p>
+    </section>
+
+    <section aria-labelledby="criteria-title">
+      <h2 id="criteria-title">Les critères</h2>
+      <ul id="criteria" class="criteria"></ul>
+    </section>
+  </main>
+
+  <footer class="wrap muted small">
+    <p>Pour le trône, pour la famille.</p>
+  </footer>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
