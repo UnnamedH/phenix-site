@@ -98,7 +98,9 @@
   function rank(data) {
     var active = data.criteria.filter(function (c) { return !c.locked; });
     var useAverage = data.ranking === "average";
-    var list = (data.patrols || []).filter(function (p) {
+    var list = (data.patrols || []).map(function (p, i) {
+      return p ? Object.assign({ order: i }, p) : p;
+    }).filter(function (p) {
       return p && String(p.name || "").trim();
     }).map(function (p) {
       var sum = active.reduce(function (s, c) { return s + toNumber((p.scores || {})[c.id]); }, 0);
@@ -106,7 +108,7 @@
         name: String(p.name).trim(),
         image: p.image,
         color: p.color,
-        emblem: p.emblem,
+        order: p.order,
         scores: p.scores || {},
         value: useAverage && active.length ? sum / active.length : sum
       };
@@ -119,78 +121,229 @@
     return list;
   }
 
-  // Line-art emblems (64×64, stroked with the family colour).
-  var EMBLEMS = {
-    tower: '<path d="M18 56V26h28v30M14 26h36M18 26v-8h6v4h5v-4h6v4h5v-4h6v8"/><path d="M28 56V44a4 4 0 0 1 8 0v12M12 56h40"/><path d="M24 33h4M36 33h4"/>',
-    crown: '<path d="M12 46 9 20l13 11 10-17 10 17 13-11-3 26Z"/><path d="M12 52h40"/><circle cx="32" cy="38" r="3"/><circle cx="9" cy="20" r="2"/><circle cx="32" cy="14" r="2"/><circle cx="55" cy="20" r="2"/>',
-    sword: '<path d="M32 6v36M27 11l5-5 5 5v31h-10Z"/><path d="M18 42h28M32 42v8"/><circle cx="32" cy="54" r="4"/>',
-    hourglass: '<path d="M18 8h28M18 56h28M21 8c0 14 22 14 22 24S21 42 21 56M43 8c0 14-22 14-22 24s22 10 22 24"/><path d="M27 50h10l-5-6Z"/>',
-    shield: '<path d="M32 8 12 15v15c0 13 9 22 20 26 11-4 20-13 20-26V15Z"/><path d="M32 8v48M12 30h40"/>'
+  // ── Pixel art ──────────────────────────────────────────────
+  // Sprites are drawn from strings: one character per pixel, "." = transparent.
+  var INK = "#2b1d14";
+
+  var KNIGHT = [
+    "....kkkk....",
+    "...khhhhk...",
+    "..khhhhhhk..",
+    "..khkkkkhk..",
+    "..khhhhhhk..",
+    "..kkkkkkkk..",
+    ".kcccccccck.",
+    "khcccggccchk",
+    "khccggggcchk",
+    "khcccggccchk",
+    "kkcccccccckk",
+    ".kddddddddk.",
+    "..kcccccck..",
+    "..khhkkhhk..",
+    "..khk..khk..",
+    "..kkk..kkk.."
+  ];
+
+  var THRONE = [
+    "...kk......kk...",
+    "..kggk....kggk..",
+    "..kgGkkkkkkGgk..",
+    "..kgGrrrrrrGgk..",
+    "..kgGrrrrrrGgk..",
+    "..kgGrrrrrrGgk..",
+    "..kgGrrrrrrGgk..",
+    "..kgGrrrrrrGgk..",
+    "..kgGrrrrrrGgk..",
+    ".kkgkkkkkkkkgkk.",
+    "kggggggggggggggk",
+    "kGGGGGGGGGGGGGGk",
+    ".kgGrrrrrrrrGgk.",
+    ".kgGrrrrrrrrGgk.",
+    ".kgkkkkkkkkkkgk.",
+    ".kgk........kgk.",
+    ".kgk........kgk.",
+    ".kGk........kGk.",
+    ".kkk........kkk."
+  ];
+
+  var CROWN = [
+    "g..g..g",
+    "gg.g.gg",
+    "ggggggg",
+    "grgggrg"
+  ];
+
+  var FLAME = [
+    "..y..",
+    ".yoy.",
+    ".ooo.",
+    "orroo",
+    ".ooo."
+  ];
+
+  var DIGITS = {
+    1: [".k.", "kk.", ".k.", ".k.", "kkk"],
+    2: ["kk.", "..k", ".k.", "k..", "kkk"],
+    3: ["kk.", "..k", ".k.", "..k", "kk."],
+    4: ["k.k", "k.k", "kkk", "..k", "..k"]
   };
 
-  function emblem(p, opts) {
-    var box = el("div", { "class": "emblem" });
-    var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    svg.setAttribute("viewBox", "0 0 64 64");
-    svg.setAttribute("aria-hidden", "true");
-    svg.innerHTML = EMBLEMS[p.emblem] || EMBLEMS.shield;
-    box.appendChild(svg);
-    if (p.image && opts && opts.image) {
-      var img = el("img", { src: p.image, alt: "Emblème de la famille " + p.name, width: "400", height: "400", decoding: "async" });
-      if (opts.eager) img.setAttribute("fetchpriority", "high"); else img.setAttribute("loading", "lazy");
-      img.addEventListener("load", function () { svg.remove(); });
-      img.addEventListener("error", function () { img.remove(); });
-      box.insertBefore(img, svg);
-      img.style.display = "none";
-      img.addEventListener("load", function () { img.style.display = ""; });
-    }
-    return box;
+  function shade(hex, f) {
+    var h = hex.replace("#", "");
+    if (h.length === 3) h = h.replace(/./g, "$&$&");
+    var n = parseInt(h.slice(0, 6), 16);
+    var r = Math.round(((n >> 16) & 255) * f), g = Math.round(((n >> 8) & 255) * f), b = Math.round((n & 255) * f);
+    return "rgb(" + Math.min(255, r) + "," + Math.min(255, g) + "," + Math.min(255, b) + ")";
+  }
+
+  function rect(x, y, w, h, fill) {
+    return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" fill="' + fill + '"/>';
+  }
+
+  // Draw a sprite, merging horizontal runs of the same colour into one rect.
+  function sprite(rows, pal, x, y) {
+    var out = "";
+    rows.forEach(function (row, j) {
+      var i = 0;
+      while (i < row.length) {
+        var ch = row[i], k = i;
+        while (k < row.length && row[k] === ch) k++;
+        if (ch !== "." && pal[ch]) out += rect(x + i, y + j, k - i, 1, pal[ch]);
+        i = k;
+      }
+    });
+    return out;
+  }
+
+  function knightPal(color) {
+    return { k: INK, h: "#c9ced6", c: color, d: shade(color, 0.6), g: "#ffd86b" };
   }
 
   function colorOf(p) {
-    return /^#[0-9a-f]{3,8}$/i.test(p.color || "") ? p.color : "#e7c17a";
+    return /^#[0-9a-f]{3}([0-9a-f]{3})?$/i.test(p.color || "") ? p.color : "#e0a526";
+  }
+
+  function banner(x, y, w, h, color, withCrown) {
+    var s = rect(x - 1, y, w + 2, 1, "#e0a526") + rect(x, y + 1, w, h - 3, color) +
+      rect(x, y + 1, 1, h - 3, shade(color, 0.75));
+    // pointed bottom
+    for (var j = 0; j < 3; j++) {
+      var inset = j + 1;
+      s += rect(x, y + h - 2 + j - 1, Math.floor(w / 2) - inset + 1, 1, color);
+      s += rect(x + Math.ceil(w / 2) + inset - 1, y + h - 2 + j - 1, Math.floor(w / 2) - inset + 1, 1, color);
+    }
+    if (withCrown) s += sprite(CROWN, { g: "#ffd86b", r: "#b83a2b" }, x + Math.floor((w - 7) / 2), y + 8);
+    else s += rect(x + Math.floor(w / 2) - 1, y + 6, 2, 2, "#ffd86b");
+    return s;
+  }
+
+  function block(x, y, w, h) {
+    return rect(x, y, w, h, INK) + rect(x + 1, y + 1, w - 2, h - 1, "#9aa1ae") +
+      rect(x + 1, y + 1, w - 2, 1, "#c8cdd6") + rect(x + 1, y + 4, w - 2, 1, "#7d8494");
+  }
+
+  // Spots where the families appear: [x, y of the sprite's top-left].
+  var SPOT = {
+    throne: [74, 33], podL: [28, 54], podR: [120, 60],
+    floorR: [143, 76], floorL: [5, 76], floorA: [26, 74], floorB: [46, 74], floorC: [102, 74], floorD: [122, 74]
+  };
+
+  function buildScene(list) {
+    var W = 160, H = 96;
+    var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="scene-desc">' +
+      '<desc id="scene-desc"></desc>' +
+      '<defs>' +
+      '<pattern id="brick" width="16" height="8" patternUnits="userSpaceOnUse">' +
+        rect(0, 0, 16, 8, "#7d8494") + rect(0, 3, 16, 1, "#666c7a") + rect(0, 7, 16, 1, "#666c7a") +
+        rect(7, 0, 1, 3, "#666c7a") + rect(15, 4, 1, 3, "#666c7a") + rect(0, 0, 7, 1, "#8b92a1") + rect(8, 4, 7, 1, "#8b92a1") +
+      '</pattern>' +
+      '<pattern id="tile" width="16" height="8" patternUnits="userSpaceOnUse">' +
+        rect(0, 0, 8, 4, "#9b7b5a") + rect(8, 0, 8, 4, "#8a6b4c") + rect(0, 4, 8, 4, "#8a6b4c") + rect(8, 4, 8, 4, "#9b7b5a") +
+      '</pattern>' +
+      '</defs>';
+
+    // room
+    svg += rect(0, 0, W, 64, "url(#brick)") + rect(0, 64, W, H - 64, "url(#tile)");
+    svg += rect(0, 0, W, 3, "#3a2a1e") + rect(0, 3, W, 1, INK) + rect(0, 63, W, 1, INK);
+    // carpet
+    svg += rect(70, 56, 20, 40, "#a3262a") + rect(70, 56, 1, 40, "#e0a526") + rect(89, 56, 1, 40, "#e0a526");
+
+    var top = list[0];
+    var holder = top && top.value > 0 && !(list[1] && list[1].value === top.value) ? top : null;
+
+    // big banner behind the throne, in the ruler's colour
+    svg += banner(68, 4, 24, 30, holder ? colorOf(holder) : "#6d6470", true);
+    // the four family banners on the walls
+    var walls = [8, 22, 130, 144];
+    list.slice().sort(function (a, b) { return a.order - b.order; }).slice(0, 4).forEach(function (p, i) {
+      svg += banner(walls[i], 4, 9, 20, colorOf(p), false);
+    });
+    // torches
+    [54, 102].forEach(function (x) {
+      svg += rect(x + 1, 30, 3, 6, "#5a3d26") + rect(x + 1, 30, 3, 1, INK) +
+        sprite(FLAME, { y: "#fff3a8", o: "#ffa726", r: "#e5532d" }, x, 25);
+    });
+
+    // dais and podiums
+    svg += block(54, 56, 52, 8) + block(60, 50, 40, 7);
+    svg += sprite(THRONE, { k: INK, g: "#e0a526", G: "#a8741a", r: "#b83a2b" }, 72, 31);
+
+    var spots;
+    if (holder) spots = ["throne", "podL", "podR", "floorR"];
+    else if (top && top.value > 0) spots = ["podL", "podR", "floorR", "floorL"];
+    else spots = ["floorA", "floorB", "floorC", "floorD"];
+
+    if (spots[0] !== "floorA") {
+      svg += block(24, 70, 20, 26) + block(116, 76, 20, 20);
+    }
+
+    list.slice(0, spots.length).forEach(function (p, i) {
+      var at = SPOT[spots[i]];
+      svg += sprite(KNIGHT, knightPal(colorOf(p)), at[0], at[1]);
+      if (spots[i] === "throne") svg += sprite(CROWN, { g: "#ffd86b", r: "#b83a2b" }, at[0] + 3, at[1] - 5);
+      var d = DIGITS[p.rank];
+      if (d && spots[i] === "podL") svg += sprite(d, { k: INK }, 33, 80);
+      if (d && spots[i] === "podR") svg += sprite(d, { k: INK }, 125, 83);
+      if (d && spots[i] === "throne") svg += sprite(d, { k: INK }, 79, 51);
+    });
+
+    return { svg: svg + "</svg>", holder: holder };
+  }
+
+  function sceneLabel(list, holder) {
+    if (!list.length || list[0].value === 0) return "Salle du trône : le trône est vide, les quatre familles attendent.";
+    return "Salle du trône : " + list.map(function (p, i) {
+      return p.name + (holder && i === 0 ? " sur le trône" : " au rang " + p.rank);
+    }).join(", ") + ".";
   }
 
   function renderThrone(list) {
-    var pill = document.getElementById("throne");
-    pill.textContent = "";
+    var scene = buildScene(list);
+    var box = document.getElementById("scene");
+    box.innerHTML = scene.svg;
+    box.querySelector("desc").textContent = sceneLabel(list, scene.holder);
+
+    var cap = document.getElementById("throne");
+    cap.textContent = "";
     var top = list[0];
-    var leaders = list.filter(function (p) { return p.rank === 1; });
     if (!top || top.value === 0) {
-      pill.textContent = "Le trône est vacant";
-    } else if (leaders.length > 1) {
-      pill.appendChild(document.createTextNode("Égalité au sommet · "));
-      leaders.forEach(function (p, i) {
-        if (i) pill.appendChild(document.createTextNode(" & "));
-        pill.appendChild(nameSpan(p.name));
+      cap.textContent = "Le trône est vacant. Que la compétition commence !";
+    } else if (!scene.holder) {
+      var tied = list.filter(function (p) { return p.rank === 1; });
+      cap.appendChild(document.createTextNode("Égalité ! "));
+      tied.forEach(function (p, i) {
+        if (i) cap.appendChild(document.createTextNode(" & "));
+        cap.appendChild(el("strong", { translate: "no" }, p.name));
       });
+      cap.appendChild(document.createTextNode(" se disputent le trône."));
     } else {
-      pill.appendChild(withIcon("♛", "Sur le trône · "));
-      pill.appendChild(nameSpan(top.name));
+      cap.appendChild(withIcon("♛", ""));
+      cap.appendChild(el("strong", { translate: "no" }, top.name));
+      cap.appendChild(document.createTextNode(" règne sur Phoenixia"));
     }
   }
 
-  function renderBanners(list, data) {
-    var ul = document.getElementById("banners");
-    ul.textContent = "";
-    var unit = data.ranking === "average" ? "moy." : "pts";
-    // Banners keep the families' fixed order so they don't jump around.
-    var byName = {};
-    list.forEach(function (p) { byName[p.name] = p; });
-    data.patrols.forEach(function (raw, i) {
-      var p = byName[String(raw && raw.name || "").trim()];
-      if (!p) return;
-      var lead = p.rank === 1 && p.value > 0;
-      var li = el("li", { "class": "banner" + (lead ? " leader" : "") });
-      li.style.setProperty("--c", colorOf(p));
-      if (lead) li.appendChild(withIcon("♛", "", { "class": "banner-crown" })).appendChild(el("span", { "class": "sr-only" }, "Sur le trône"));
-      li.appendChild(emblem(p, { image: true, eager: i < 4 }));
-      li.appendChild(el("h3", { "class": "banner-name", translate: "no" }, p.name));
-      li.appendChild(el("p", { "class": "banner-pts" }, nf.format(p.value) + " " + unit));
-      ul.appendChild(li);
-    });
-  }
-
+  // ── Family sheets ──────────────────────────────────────────
   // Bar scale per criterion: its "max" from the data file if set, otherwise the
   // best score among the families (so the leader in that criterion fills the bar).
   function scaleFor(c, list) {
@@ -198,100 +351,79 @@
     return list.reduce(function (m, p) { return Math.max(m, toNumber(p.scores[c.id])); }, 0);
   }
 
-  var PLACES = ["Première place", "Deuxième place", "Troisième place", "Quatrième place", "Cinquième place"];
-
-  function stats(p, data, scales, fills) {
-    var ul = el("ul", { "class": "stats" });
-    data.criteria.forEach(function (c) {
-      var item = el("li", { "class": "stat" + (c.locked ? " locked" : "") });
-      var row = el("div", { "class": "stat-row" });
-      var label = withIcon(c.locked ? "🔒" : "", c.label);
-      if (c.locked) label.appendChild(el("span", { "class": "sr-only" }, " (verrouillé)"));
-      row.appendChild(label);
-      var v = toNumber(p.scores[c.id]);
-      var max = scales[c.id];
-      row.appendChild(el("span", null, c.locked ? "Bientôt" : nf.format(v) + (c.max > 0 ? " / " + nf.format(c.max) : "")));
-      item.appendChild(row);
-      var bar = el("div", { "class": "bar" });
-      if (c.locked) {
-        bar.setAttribute("aria-hidden", "true");
-      } else {
-        bar.setAttribute("role", "meter");
-        bar.setAttribute("aria-label", c.label + " — " + p.name);
-        bar.setAttribute("aria-valuemin", "0");
-        bar.setAttribute("aria-valuemax", String(max || 1));
-        bar.setAttribute("aria-valuenow", String(v));
-        var fill = el("div", { "class": "bar-fill" });
-        bar.appendChild(fill);
-        fills.push([fill, max > 0 ? Math.min(1, Math.max(0, v / max)) : 0]);
-      }
-      item.appendChild(bar);
-      ul.appendChild(item);
-    });
-    return ul;
-  }
-
-  function stand(p, list, data, scales, fills, opts) {
-    var box = el("div", { "class": "stand" });
-    box.style.setProperty("--c", colorOf(p));
-    var head = el("div", { "class": "stand-head" });
-    head.appendChild(emblem(p, { image: true }));
-    var text = el("div");
-    text.appendChild(el("h3", { "class": "stand-name", translate: "no" }, p.name));
-    text.appendChild(el("p", { "class": "stand-total" }, nf.format(p.value)));
-    var gapTo = list[0] && p !== list[0] && list[0].value > p.value ? " · écart : " + nf.format(list[0].value - p.value) : "";
-    text.appendChild(el("p", { "class": "stand-meta" }, (data.ranking === "average" ? "moyenne" : "points") + gapTo));
-    head.appendChild(text);
-    box.appendChild(head);
-    box.appendChild(stats(p, data, scales, fills));
+  function portrait(p, eager) {
+    var box = el("div", { "class": "portrait" });
+    box.innerHTML = '<svg viewBox="0 0 12 16" aria-hidden="true">' + sprite(KNIGHT, knightPal(colorOf(p)), 0, 0) + "</svg>";
+    if (p.image) {
+      var img = el("img", { src: p.image, alt: "Emblème de la famille " + p.name, width: "72", height: "72", decoding: "async" });
+      if (eager) img.setAttribute("fetchpriority", "high"); else img.setAttribute("loading", "lazy");
+      img.hidden = true;
+      img.addEventListener("load", function () { box.textContent = ""; img.hidden = false; box.appendChild(img); });
+      box.appendChild(img);
+    }
     return box;
   }
 
-  function placeNum(p, lead) {
-    var n = el("div", { "class": "place-num", "aria-hidden": "true" }, (lead ? "♛ " : "") + p.rank);
-    return n;
-  }
+  function ordinal(n) { return n === 1 ? "1er" : n + "e"; }
 
-  function renderBoard(list, data) {
-    var board = document.getElementById("board");
-    board.textContent = "";
+  function renderSheets(list, data, holder) {
+    var ol = document.getElementById("sheets");
+    ol.textContent = "";
     var scales = {};
     data.criteria.forEach(function (c) { if (!c.locked) scales[c.id] = scaleFor(c, list); });
+    var unit = data.ranking === "average" ? "moyenne" : "points";
     var fills = [];
-    var started = list.length && list[0].value > 0;
 
-    if (!started) {
-      board.appendChild(el("p", { "class": "empty-note" }, "Aucun point n’a encore été attribué. Que la compétition commence."));
-    }
+    list.forEach(function (p, i) {
+      var onThrone = holder && p === holder;
+      var li = el("li", { "class": "sheet px" + (onThrone ? " leader" : "") });
+      li.style.setProperty("--c", colorOf(p));
 
-    var podiumCount = started ? Math.min(3, list.length) : 0;
-    if (podiumCount) {
-      var podium = el("ol", { "class": "podium" });
-      list.slice(0, podiumCount).forEach(function (p, i) {
-        var li = el("li", { "class": "p" + (i + 1) });
-        li.appendChild(el("span", { "class": "sr-only" }, "Rang " + p.rank + (p.rank === 1 ? ", sur le trône" : "")));
-        li.appendChild(placeNum(p, p.rank === 1));
-        li.appendChild(stand(p, list, data, scales, fills));
-        li.appendChild(el("div", { "class": "plinth", "aria-hidden": "true" }, PLACES[p.rank - 1] || "Rang " + p.rank));
-        podium.appendChild(li);
+      var head = el("div", { "class": "sheet-head" });
+      head.appendChild(portrait(p, i < 2));
+      var title = el("div", { "class": "sheet-title" });
+      title.appendChild(el("h3", { "class": "sheet-name", translate: "no" }, p.name));
+      var started = list[0] && list[0].value > 0;
+      title.appendChild(el("p", { "class": "sheet-rank" },
+        !started ? "En attente" : onThrone ? "♛ Sur le trône" : ordinal(p.rank) + " place"));
+      head.appendChild(title);
+      var total = el("p", { "class": "sheet-total" }, nf.format(p.value));
+      total.appendChild(el("small", null, unit));
+      head.appendChild(total);
+      li.appendChild(head);
+
+      var ul = el("ul", { "class": "stats" });
+      data.criteria.forEach(function (c) {
+        var item = el("li", { "class": "stat" + (c.locked ? " locked" : "") });
+        var row = el("div", { "class": "stat-row" });
+        var label = withIcon(c.locked ? "🔒" : "", c.locked ? "???" : c.label);
+        if (c.locked) label.appendChild(el("span", { "class": "sr-only" }, " (critère verrouillé)"));
+        row.appendChild(label);
+        var v = toNumber(p.scores[c.id]);
+        var max = scales[c.id];
+        row.appendChild(el("span", null, c.locked ? "Bientôt" : nf.format(v) + (c.max > 0 ? " / " + nf.format(c.max) : "")));
+        item.appendChild(row);
+        var bar = el("div", { "class": "bar" });
+        if (c.locked) {
+          bar.setAttribute("aria-hidden", "true");
+        } else {
+          bar.setAttribute("role", "meter");
+          bar.setAttribute("aria-label", c.label + " — " + p.name);
+          bar.setAttribute("aria-valuemin", "0");
+          bar.setAttribute("aria-valuemax", String(max || 1));
+          bar.setAttribute("aria-valuenow", String(v));
+          var fill = el("div", { "class": "bar-fill" });
+          bar.appendChild(fill);
+          fills.push([fill, max > 0 ? Math.min(1, Math.max(0, v / max)) : 0]);
+        }
+        item.appendChild(bar);
+        ul.appendChild(item);
       });
-      board.appendChild(podium);
-    }
+      li.appendChild(ul);
+      ol.appendChild(li);
+    });
 
-    var rest = list.slice(podiumCount);
-    if (rest.length) {
-      var ol = el("ol", { "class": "rows", start: String(podiumCount + 1) });
-      rest.forEach(function (p) {
-        var li = el("li", { "class": "row" });
-        li.appendChild(el("span", { "class": "sr-only" }, "Rang " + p.rank));
-        li.appendChild(placeNum(p, false));
-        li.appendChild(stand(p, list, data, scales, fills));
-        ol.appendChild(li);
-      });
-      board.appendChild(ol);
-    }
-
-    // Grow the bars after the first paint.
+    // Fill the bars after the first paint.
     requestAnimationFrame(function () {
       requestAnimationFrame(function () {
         fills.forEach(function (f) { f[0].style.setProperty("--p", f[1]); });
@@ -308,30 +440,27 @@
     var ul = document.getElementById("criteria");
     ul.textContent = "";
     data.criteria.forEach(function (c) {
-      var li = el("li", { "class": "tile" + (c.locked ? " locked" : "") });
-      var name = el("p", { "class": "tile-name" });
+      var li = el("li", { "class": "quest px" + (c.locked ? " locked" : "") });
+      var name = el("span", { "class": "quest-name" });
       name.appendChild(withIcon(c.locked ? "🔒" : "", c.locked ? "???" : c.label));
       if (c.locked) name.appendChild(el("span", { "class": "sr-only" }, " (critère verrouillé)"));
       li.appendChild(name);
-      li.appendChild(el("p", { "class": "tile-hint" }, c.locked ? "Révélé plus tard" : (c.hint || "")));
+      li.appendChild(el("span", { "class": "quest-hint" }, c.locked ? "Révélé plus tard" : (c.hint || "")));
       ul.appendChild(li);
     });
   }
 
   function render(data) {
     var list = rank(data);
+    var holder = list[0] && list[0].value > 0 && !(list[1] && list[1].value === list[0].value) ? list[0] : null;
     renderThrone(list);
-    renderBanners(list, data);
-    renderBoard(list, data);
+    renderSheets(list, data, holder);
     renderCriteria(data);
   }
 
   function showError() {
-    document.getElementById("throne").textContent = "Classement indisponible";
-    var board = document.getElementById("board");
-    board.textContent = "";
-    board.appendChild(el("p", { "class": "empty-note" },
-      "Impossible de charger le classement. Vérifiez votre connexion puis rechargez la page."));
+    document.getElementById("throne").textContent =
+      "Impossible de charger le classement. Vérifiez votre connexion puis rechargez la page.";
   }
 
   var cfg = window.PHENIX_CONFIG || {};

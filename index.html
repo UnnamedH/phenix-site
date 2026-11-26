@@ -5,80 +5,63 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Le Trône de Phoenixia</title>
   <meta name="description" content="Classement des quatre familles qui se disputent le trône de Phoenixia.">
-  <meta name="theme-color" content="#0d0b10">
+  <meta name="theme-color" content="#3a2a1e">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://docs.google.com">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&display=swap">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <a class="skip" href="#main">Aller au classement</a>
 
-  <header class="hero">
-    <nav class="nav wrap" aria-label="Sections">
-      <a class="brand" href="#top" translate="no"><span aria-hidden="true">✦</span> Phoenixia</a>
-      <ul>
-        <li><a href="#familles">Familles</a></li>
-        <li><a href="#classement">Classement</a></li>
-        <li><a href="#criteres">Critères</a></li>
-        <li><a href="#histoire">Histoire</a></li>
-      </ul>
-    </nav>
-
-    <div class="hero-inner wrap" id="top">
-      <svg class="hero-crown" viewBox="0 0 64 40" width="72" height="45" aria-hidden="true">
-        <path d="M6 34 L4 10 L18 22 L32 4 L46 22 L60 10 L58 34 Z" />
-        <line x1="6" y1="34" x2="58" y2="34" />
-        <circle cx="4" cy="10" r="2.5" /><circle cx="32" cy="4" r="2.5" /><circle cx="60" cy="10" r="2.5" />
-      </svg>
+  <header class="top">
+    <div class="wrap">
       <p class="eyebrow">Cadre symbolique 2026–2027</p>
-      <h1 translate="no">Phoenixia</h1>
-      <p class="hero-sub">Le trône du Roi attend son héritier</p>
-      <p class="throne-pill" id="throne" aria-live="polite">Chargement…</p>
+      <h1><span translate="no">Le Trône de Phoenixia</span></h1>
     </div>
   </header>
 
-  <main id="main">
-    <section class="wrap section" id="familles" aria-labelledby="familles-title">
-      <p class="kicker">01 / Les prétendants</p>
-      <h2 id="familles-title">Les familles</h2>
-      <ul class="banners" id="banners"></ul>
+  <main id="main" class="wrap">
+    <section aria-labelledby="throne-title">
+      <h2 id="throne-title" class="sr-only">La salle du trône</h2>
+      <figure class="scene-frame">
+        <div id="scene" class="scene"></div>
+        <figcaption id="throne" class="scene-caption" aria-live="polite">Chargement…</figcaption>
+      </figure>
     </section>
 
-    <section class="wrap section" id="classement" aria-labelledby="classement-title">
-      <p class="kicker">02 / Compétition</p>
-      <h2 id="classement-title">Classement</h2>
-      <div id="board"></div>
-      <p class="updated" id="updated"></p>
+    <section aria-labelledby="board-title">
+      <h2 id="board-title">Les familles</h2>
+      <ol id="sheets" class="sheets"></ol>
+      <p id="updated" class="updated"></p>
     </section>
 
-    <section class="wrap section" id="criteres" aria-labelledby="criteres-title">
-      <p class="kicker">03 / Barème</p>
-      <h2 id="criteres-title">Les critères</h2>
-      <ul class="tiles" id="criteria"></ul>
+    <section aria-labelledby="criteria-title">
+      <h2 id="criteria-title">Comment gagner des points</h2>
+      <ul id="criteria" class="quests"></ul>
     </section>
 
-    <section class="wrap section" id="histoire" aria-labelledby="histoire-title">
-      <p class="kicker">04 / Chronique</p>
-      <h2 id="histoire-title">L’histoire</h2>
-      <div class="story">
+    <section aria-labelledby="story-title">
+      <h2 id="story-title">L’histoire</h2>
+      <div class="dialog">
+        <p class="dialog-name">Le héraut du royaume</p>
         <p>
           Le Roi de <span translate="no">Phoenixia</span> est mort sans désigner de successeur.
           Avant de s’éteindre, il avait donné un nom à quatre familles&nbsp;:
           <span translate="no">Robustina, Imposina, Virilina</span> et <span translate="no">Diligina</span>.
         </p>
         <p>
-          Depuis, les quatre familles se disputent le trône. Celle qui prouvera sa valeur, par son
-          <em>Town Hall</em>, ses <em>Trophies</em> et son <em>Esprit</em>, montera sur le trône.
+          Depuis, les familles se disputent son trône. Celle qui prouvera sa valeur par son
+          <strong>Town Hall</strong>, ses <strong>Trophies</strong> et son <strong>Esprit</strong> s’y assiéra.
         </p>
-        <p class="rumour"><span aria-hidden="true">✦</span> Une rumeur court au palais… <span aria-hidden="true">✦</span></p>
+        <p class="dialog-more">Une rumeur court au palais… <span class="blink" aria-hidden="true">▼</span></p>
       </div>
     </section>
   </main>
 
-  <footer class="footer">
-    <p><span aria-hidden="true">✦</span> <span translate="no">Royaume de Phoenixia</span> <span aria-hidden="true">✦</span></p>
+  <footer class="foot">
+    <p translate="no">Royaume de Phoenixia</p>
   </footer>
 
   <script src="config.js"></script>
