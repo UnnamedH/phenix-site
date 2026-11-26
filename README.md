@@ -21,7 +21,9 @@ If the sheet can't be reached, the site falls back to `data/patrols.json`.
 ## Settings (in `data/patrols.json`)
 
 - `ranking`: `"total"` or `"average"` of the criteria that are not locked.
-- `patrols[].image`: picture for each family's card (e.g. `images/phoenixia.jpg`). Landscape works best (about 16:10); a large letter is shown until a picture is added.
+- `patrols[].color`: each family's colour (hex, e.g. `"#d4553f"`).
+- `patrols[].emblem`: built-in line emblem: `tower`, `crown`, `sword`, `hourglass` or `shield`.
+- `patrols[].image`: picture for each family's card (e.g. `images/phoenixia.jpg`). Square works best; it replaces the emblem inside the circle once the file exists.
 - `criteria[].max` (optional): the score that fills a bar completely, e.g. `"max": 100`. Without it, the family with the best score in that criterion has a full bar and the others are relative to it.
 - `criteria`: set `"locked": false` and give a new `label` to reveal criterion 4 or 5. Locked criteria never count toward the ranking.
 - Family names in the sheet must match the names in `data/patrols.json`, because that is how each family keeps its picture.

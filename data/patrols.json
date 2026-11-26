@@ -45,6 +45,8 @@
     {
       "name": "Robustina",
       "image": "images/robustina.jpg",
+      "color": "#d4553f",
+      "emblem": "tower",
       "scores": {
         "townhall": 0,
         "trophies": 0,
@@ -54,6 +56,8 @@
     {
       "name": "Imposina",
       "image": "images/imposina.jpg",
+      "color": "#a585e6",
+      "emblem": "crown",
       "scores": {
         "townhall": 0,
         "trophies": 0,
@@ -63,6 +67,8 @@
     {
       "name": "Virilina",
       "image": "images/virilina.jpg",
+      "color": "#4f9ad6",
+      "emblem": "sword",
       "scores": {
         "townhall": 0,
         "trophies": 0,
@@ -72,6 +78,8 @@
     {
       "name": "Diligina",
       "image": "images/diligina.jpg",
+      "color": "#45b388",
+      "emblem": "hourglass",
       "scores": {
         "townhall": 0,
         "trophies": 0,

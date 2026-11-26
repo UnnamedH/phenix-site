@@ -3,6 +3,7 @@
 
   var nf = new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 1 });
   var df = new Intl.DateTimeFormat("fr-FR", { dateStyle: "long" });
+  var tf = new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit" });
 
   function el(tag, attrs, text) {
     var node = document.createElement(tag);
@@ -87,7 +88,7 @@
       var k = known[norm(r[nameCol])];
       var scores = {};
       for (var id in colFor) scores[id] = toNumber(r[colFor[id]]);
-      return { name: k ? k.name : String(r[nameCol]).trim(), image: k && k.image, scores: scores };
+      return Object.assign({}, k || {}, { name: k ? k.name : String(r[nameCol]).trim(), scores: scores });
     });
     if (patrols.length) data.patrols = patrols;
     data.updated = null;
@@ -104,6 +105,8 @@
       return {
         name: String(p.name).trim(),
         image: p.image,
+        color: p.color,
+        emblem: p.emblem,
         scores: p.scores || {},
         value: useAverage && active.length ? sum / active.length : sum
       };
@@ -116,33 +119,76 @@
     return list;
   }
 
-  function renderThrone(list, data) {
-    var box = document.getElementById("throne");
-    box.textContent = "";
-    var card = el("div", { "class": "throne-card" });
+  // Line-art emblems (64×64, stroked with the family colour).
+  var EMBLEMS = {
+    tower: '<path d="M18 56V26h28v30M14 26h36M18 26v-8h6v4h5v-4h6v4h5v-4h6v8"/><path d="M28 56V44a4 4 0 0 1 8 0v12M12 56h40"/><path d="M24 33h4M36 33h4"/>',
+    crown: '<path d="M12 46 9 20l13 11 10-17 10 17 13-11-3 26Z"/><path d="M12 52h40"/><circle cx="32" cy="38" r="3"/><circle cx="9" cy="20" r="2"/><circle cx="32" cy="14" r="2"/><circle cx="55" cy="20" r="2"/>',
+    sword: '<path d="M32 6v36M27 11l5-5 5 5v31h-10Z"/><path d="M18 42h28M32 42v8"/><circle cx="32" cy="54" r="4"/>',
+    hourglass: '<path d="M18 8h28M18 56h28M21 8c0 14 22 14 22 24S21 42 21 56M43 8c0 14-22 14-22 24s22 10 22 24"/><path d="M27 50h10l-5-6Z"/>',
+    shield: '<path d="M32 8 12 15v15c0 13 9 22 20 26 11-4 20-13 20-26V15Z"/><path d="M32 8v48M12 30h40"/>'
+  };
+
+  function emblem(p, opts) {
+    var box = el("div", { "class": "emblem" });
+    var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 64 64");
+    svg.setAttribute("aria-hidden", "true");
+    svg.innerHTML = EMBLEMS[p.emblem] || EMBLEMS.shield;
+    box.appendChild(svg);
+    if (p.image && opts && opts.image) {
+      var img = el("img", { src: p.image, alt: "Emblème de la famille " + p.name, width: "400", height: "400", decoding: "async" });
+      if (opts.eager) img.setAttribute("fetchpriority", "high"); else img.setAttribute("loading", "lazy");
+      img.addEventListener("load", function () { svg.remove(); });
+      img.addEventListener("error", function () { img.remove(); });
+      box.insertBefore(img, svg);
+      img.style.display = "none";
+      img.addEventListener("load", function () { img.style.display = ""; });
+    }
+    return box;
+  }
+
+  function colorOf(p) {
+    return /^#[0-9a-f]{3,8}$/i.test(p.color || "") ? p.color : "#e7c17a";
+  }
+
+  function renderThrone(list) {
+    var pill = document.getElementById("throne");
+    pill.textContent = "";
     var top = list[0];
     var leaders = list.filter(function (p) { return p.rank === 1; });
-
     if (!top || top.value === 0) {
-      card.appendChild(el("p", { "class": "throne-name" }, "Le trône est vacant"));
-      card.appendChild(el("p", { "class": "throne-meta" }, "Aucun point n’a encore été attribué. Que la compétition commence."));
+      pill.textContent = "Le trône est vacant";
     } else if (leaders.length > 1) {
-      var names = el("p", { "class": "throne-name" });
+      pill.appendChild(document.createTextNode("Égalité au sommet · "));
       leaders.forEach(function (p, i) {
-        if (i) names.appendChild(document.createTextNode(" & "));
-        names.appendChild(nameSpan(p.name));
+        if (i) pill.appendChild(document.createTextNode(" & "));
+        pill.appendChild(nameSpan(p.name));
       });
-      card.appendChild(names);
-      card.appendChild(el("p", { "class": "throne-meta" }, "Égalité à " + nf.format(top.value) + " points. Le trône vacille."));
     } else {
-      var gap = list[1] ? top.value - list[1].value : top.value;
-      card.appendChild(el("p", { "class": "throne-name", translate: "no" }, top.name));
-      var meta = el("p", { "class": "throne-meta" },
-        nf.format(top.value) + " points · " + nf.format(gap) + " d’avance sur ");
-      meta.appendChild(list[1] ? nameSpan(list[1].name) : document.createTextNode("personne"));
-      card.appendChild(meta);
+      pill.appendChild(withIcon("♛", "Sur le trône · "));
+      pill.appendChild(nameSpan(top.name));
     }
-    box.appendChild(card);
+  }
+
+  function renderBanners(list, data) {
+    var ul = document.getElementById("banners");
+    ul.textContent = "";
+    var unit = data.ranking === "average" ? "moy." : "pts";
+    // Banners keep the families' fixed order so they don't jump around.
+    var byName = {};
+    list.forEach(function (p) { byName[p.name] = p; });
+    data.patrols.forEach(function (raw, i) {
+      var p = byName[String(raw && raw.name || "").trim()];
+      if (!p) return;
+      var lead = p.rank === 1 && p.value > 0;
+      var li = el("li", { "class": "banner" + (lead ? " leader" : "") });
+      li.style.setProperty("--c", colorOf(p));
+      if (lead) li.appendChild(withIcon("♛", "", { "class": "banner-crown" })).appendChild(el("span", { "class": "sr-only" }, "Sur le trône"));
+      li.appendChild(emblem(p, { image: true, eager: i < 4 }));
+      li.appendChild(el("h3", { "class": "banner-name", translate: "no" }, p.name));
+      li.appendChild(el("p", { "class": "banner-pts" }, nf.format(p.value) + " " + unit));
+      ul.appendChild(li);
+    });
   }
 
   // Bar scale per criterion: its "max" from the data file if set, otherwise the
@@ -152,79 +198,98 @@
     return list.reduce(function (m, p) { return Math.max(m, toNumber(p.scores[c.id])); }, 0);
   }
 
-  function media(p, aboveFold) {
-    var box = el("div", { "class": "card-media" });
-    var mono = el("span", { "class": "monogram", "aria-hidden": "true" }, p.name.charAt(0).toUpperCase());
-    box.appendChild(mono);
-    if (p.image) {
-      var img = el("img", { src: p.image, alt: "Emblème de la famille " + p.name, width: "640", height: "400", decoding: "async" });
-      if (aboveFold) img.setAttribute("fetchpriority", "high");
-      else img.setAttribute("loading", "lazy");
-      img.addEventListener("error", function () { img.remove(); });
-      box.appendChild(img);
-    }
+  var PLACES = ["Première place", "Deuxième place", "Troisième place", "Quatrième place", "Cinquième place"];
+
+  function stats(p, data, scales, fills) {
+    var ul = el("ul", { "class": "stats" });
+    data.criteria.forEach(function (c) {
+      var item = el("li", { "class": "stat" + (c.locked ? " locked" : "") });
+      var row = el("div", { "class": "stat-row" });
+      var label = withIcon(c.locked ? "🔒" : "", c.label);
+      if (c.locked) label.appendChild(el("span", { "class": "sr-only" }, " (verrouillé)"));
+      row.appendChild(label);
+      var v = toNumber(p.scores[c.id]);
+      var max = scales[c.id];
+      row.appendChild(el("span", null, c.locked ? "Bientôt" : nf.format(v) + (c.max > 0 ? " / " + nf.format(c.max) : "")));
+      item.appendChild(row);
+      var bar = el("div", { "class": "bar" });
+      if (c.locked) {
+        bar.setAttribute("aria-hidden", "true");
+      } else {
+        bar.setAttribute("role", "meter");
+        bar.setAttribute("aria-label", c.label + " — " + p.name);
+        bar.setAttribute("aria-valuemin", "0");
+        bar.setAttribute("aria-valuemax", String(max || 1));
+        bar.setAttribute("aria-valuenow", String(v));
+        var fill = el("div", { "class": "bar-fill" });
+        bar.appendChild(fill);
+        fills.push([fill, max > 0 ? Math.min(1, Math.max(0, v / max)) : 0]);
+      }
+      item.appendChild(bar);
+      ul.appendChild(item);
+    });
+    return ul;
+  }
+
+  function stand(p, list, data, scales, fills, opts) {
+    var box = el("div", { "class": "stand" });
+    box.style.setProperty("--c", colorOf(p));
+    var head = el("div", { "class": "stand-head" });
+    head.appendChild(emblem(p, { image: true }));
+    var text = el("div");
+    text.appendChild(el("h3", { "class": "stand-name", translate: "no" }, p.name));
+    text.appendChild(el("p", { "class": "stand-total" }, nf.format(p.value)));
+    var gapTo = list[0] && p !== list[0] && list[0].value > p.value ? " · écart : " + nf.format(list[0].value - p.value) : "";
+    text.appendChild(el("p", { "class": "stand-meta" }, (data.ranking === "average" ? "moyenne" : "points") + gapTo));
+    head.appendChild(text);
+    box.appendChild(head);
+    box.appendChild(stats(p, data, scales, fills));
     return box;
   }
 
-  function renderCards(list, data) {
-    var ol = document.getElementById("cards");
-    ol.textContent = "";
+  function placeNum(p, lead) {
+    var n = el("div", { "class": "place-num", "aria-hidden": "true" }, (lead ? "♛ " : "") + p.rank);
+    return n;
+  }
+
+  function renderBoard(list, data) {
+    var board = document.getElementById("board");
+    board.textContent = "";
     var scales = {};
     data.criteria.forEach(function (c) { if (!c.locked) scales[c.id] = scaleFor(c, list); });
-    var unit = data.ranking === "average" ? "moy." : "pts";
     var fills = [];
+    var started = list.length && list[0].value > 0;
 
-    list.forEach(function (p, i) {
-      var isLeader = p.rank === 1 && p.value > 0;
-      var li = el("li", { "class": "card" + (isLeader ? " leader" : "") });
+    if (!started) {
+      board.appendChild(el("p", { "class": "empty-note" }, "Aucun point n’a encore été attribué. Que la compétition commence."));
+    }
 
-      var m = media(p, i < 2);
-      var badge = el("span", { "class": "rank" });
-      badge.appendChild(el("span", { "aria-hidden": "true" }, (isLeader ? "👑 " : "#") + p.rank));
-      badge.appendChild(el("span", { "class": "sr-only" }, "Rang " + p.rank + (isLeader ? ", sur le trône" : "")));
-      m.appendChild(badge);
-      li.appendChild(m);
-
-      var body = el("div", { "class": "card-body" });
-      var head = el("div", { "class": "card-head" });
-      head.appendChild(el("h3", { "class": "card-name", translate: "no" }, p.name));
-      var total = el("p", { "class": "card-total" }, nf.format(p.value) + " ");
-      total.appendChild(el("span", null, unit));
-      head.appendChild(total);
-      body.appendChild(head);
-
-      var stats = el("ul", { "class": "stats" });
-      data.criteria.forEach(function (c) {
-        var item = el("li", { "class": "stat" + (c.locked ? " locked" : "") });
-        var row = el("div", { "class": "stat-row" });
-        var label = withIcon(c.locked ? "🔒" : "", c.label);
-        if (c.locked) label.appendChild(el("span", { "class": "sr-only" }, " (verrouillé)"));
-        row.appendChild(label);
-        var v = toNumber(p.scores[c.id]);
-        var max = scales[c.id];
-        row.appendChild(el("span", null, c.locked ? "Bientôt" : nf.format(v) + (c.max > 0 ? " / " + nf.format(c.max) : "")));
-        item.appendChild(row);
-
-        var bar = el("div", { "class": "bar" });
-        if (c.locked) {
-          bar.setAttribute("aria-hidden", "true");
-        } else {
-          bar.setAttribute("role", "meter");
-          bar.setAttribute("aria-label", c.label + " — " + p.name);
-          bar.setAttribute("aria-valuemin", "0");
-          bar.setAttribute("aria-valuemax", String(max || 1));
-          bar.setAttribute("aria-valuenow", String(v));
-          var fill = el("div", { "class": "bar-fill" });
-          bar.appendChild(fill);
-          fills.push([fill, max > 0 ? Math.min(1, Math.max(0, v / max)) : 0]);
-        }
-        item.appendChild(bar);
-        stats.appendChild(item);
+    var podiumCount = started ? Math.min(3, list.length) : 0;
+    if (podiumCount) {
+      var podium = el("ol", { "class": "podium" });
+      list.slice(0, podiumCount).forEach(function (p, i) {
+        var li = el("li", { "class": "p" + (i + 1) });
+        li.appendChild(el("span", { "class": "sr-only" }, "Rang " + p.rank + (p.rank === 1 ? ", sur le trône" : "")));
+        li.appendChild(placeNum(p, p.rank === 1));
+        li.appendChild(stand(p, list, data, scales, fills));
+        li.appendChild(el("div", { "class": "plinth", "aria-hidden": "true" }, PLACES[p.rank - 1] || "Rang " + p.rank));
+        podium.appendChild(li);
       });
-      body.appendChild(stats);
-      li.appendChild(body);
-      ol.appendChild(li);
-    });
+      board.appendChild(podium);
+    }
+
+    var rest = list.slice(podiumCount);
+    if (rest.length) {
+      var ol = el("ol", { "class": "rows", start: String(podiumCount + 1) });
+      rest.forEach(function (p) {
+        var li = el("li", { "class": "row" });
+        li.appendChild(el("span", { "class": "sr-only" }, "Rang " + p.rank));
+        li.appendChild(placeNum(p, false));
+        li.appendChild(stand(p, list, data, scales, fills));
+        ol.appendChild(li);
+      });
+      board.appendChild(ol);
+    }
 
     // Grow the bars after the first paint.
     requestAnimationFrame(function () {
@@ -234,35 +299,38 @@
     });
 
     var updated = document.getElementById("updated");
-    if (data.updated) {
-      updated.textContent = "Mis à jour le " + df.format(new Date(data.updated + "T12:00:00"));
-    } else {
-      updated.textContent = "Données en direct depuis la feuille de calcul.";
-    }
+    updated.textContent = data.updated
+      ? "Mis à jour le " + df.format(new Date(data.updated + "T12:00:00"))
+      : "En direct depuis la feuille de calcul · " + tf.format(new Date());
   }
 
   function renderCriteria(data) {
     var ul = document.getElementById("criteria");
     ul.textContent = "";
     data.criteria.forEach(function (c) {
-      var li = el("li", c.locked ? { "class": "locked" } : null);
-      li.appendChild(withIcon(c.locked ? "🔒" : "", c.label));
-      li.appendChild(el("span", null, c.locked ? "Révélé plus tard" : (c.hint || "")));
+      var li = el("li", { "class": "tile" + (c.locked ? " locked" : "") });
+      var name = el("p", { "class": "tile-name" });
+      name.appendChild(withIcon(c.locked ? "🔒" : "", c.locked ? "???" : c.label));
+      if (c.locked) name.appendChild(el("span", { "class": "sr-only" }, " (critère verrouillé)"));
+      li.appendChild(name);
+      li.appendChild(el("p", { "class": "tile-hint" }, c.locked ? "Révélé plus tard" : (c.hint || "")));
       ul.appendChild(li);
     });
   }
 
   function render(data) {
     var list = rank(data);
-    renderThrone(list, data);
-    renderCards(list, data);
+    renderThrone(list);
+    renderBanners(list, data);
+    renderBoard(list, data);
     renderCriteria(data);
   }
 
   function showError() {
-    var box = document.getElementById("throne");
-    box.textContent = "";
-    box.appendChild(el("p", { "class": "muted" },
+    document.getElementById("throne").textContent = "Classement indisponible";
+    var board = document.getElementById("board");
+    board.textContent = "";
+    board.appendChild(el("p", { "class": "empty-note" },
       "Impossible de charger le classement. Vérifiez votre connexion puis rechargez la page."));
   }
 
