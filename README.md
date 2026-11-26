@@ -14,6 +14,7 @@ A plain static site (HTML, CSS and JS) with no build step and no server.
 | Robustina | 12       | 8        | 20     |
 
 Then go to File → Share → Publish to web, choose the tab, choose *CSV*, and paste the link into `SHEET_CSV_URL` in `config.js`.
+The layout is forgiving: blank rows and columns are fine, and headers can use a criterion's id, label or one of its `aliases` (e.g. `TH`).
 After that, edits in the sheet appear on the site within a few minutes (Google caches the published file).
 If the sheet can't be reached, the site falls back to `data/patrols.json`.
 

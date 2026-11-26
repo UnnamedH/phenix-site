@@ -32,7 +32,8 @@
   }
 
   function norm(s) {
-    return String(s).trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+    return String(s == null ? "" : s).trim().toLowerCase()
+      .normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[\s_-]+/g, "");
   }
 
   function toNumber(v) {
@@ -41,22 +42,40 @@
   }
 
   // Replace the JSON scores with the ones found in the published Google Sheet.
+  // The sheet layout is forgiving: blank rows/columns are fine, the family column
+  // is found by its names, the header row is the row just above the first family,
+  // and a criterion column can be titled with its id, label or any of its "aliases".
   function applySheet(data, csv) {
     var rows = parseCsv(csv);
-    if (rows.length < 2) return data;
-    var header = rows[0].map(norm);
+    var known = {};
+    data.patrols.forEach(function (p) { known[norm(p.name)] = p; });
+
+    // Family column: the one where the most cells are known family names.
+    var width = rows.reduce(function (w, r) { return Math.max(w, r.length); }, 0);
+    var nameCol = -1, best = 0;
+    for (var c = 0; c < width; c++) {
+      var hits = rows.filter(function (r) { return known[norm(r[c])]; }).length;
+      if (hits > best) { best = hits; nameCol = c; }
+    }
+    if (nameCol < 0) return data;
+
+    var first = rows.findIndex(function (r) { return known[norm(r[nameCol])]; });
+    if (first < 1) return data;
+    var header = rows[first - 1].map(norm);
+
     var colFor = {};
-    data.criteria.forEach(function (c) {
-      var idx = header.indexOf(norm(c.id));
-      if (idx < 0) idx = header.indexOf(norm(c.label));
-      if (idx > 0) colFor[c.id] = idx;
+    data.criteria.forEach(function (crit) {
+      var names = [crit.id, crit.label].concat(crit.aliases || []).map(norm);
+      var idx = header.findIndex(function (h, i) { return i !== nameCol && h && names.indexOf(h) >= 0; });
+      if (idx >= 0) colFor[crit.id] = idx;
     });
-    var patrols = rows.slice(1).map(function (r) {
+
+    var patrols = rows.slice(first).filter(function (r) { return norm(r[nameCol]); }).map(function (r) {
+      var k = known[norm(r[nameCol])];
       var scores = {};
       for (var id in colFor) scores[id] = toNumber(r[colFor[id]]);
-      var known = data.patrols.filter(function (q) { return norm(q.name) === norm(r[0]); })[0];
-      return { name: r[0].trim(), image: known && known.image, scores: scores };
-    }).filter(function (p) { return p.name; });
+      return { name: k ? k.name : String(r[nameCol]).trim(), image: k && k.image, scores: scores };
+    });
     if (patrols.length) data.patrols = patrols;
     data.updated = null;
     return data;
@@ -164,7 +183,7 @@
           bar.setAttribute("role", "meter");
           bar.setAttribute("aria-label", c.label + " — " + p.name);
           bar.setAttribute("aria-valuemin", "0");
-          bar.setAttribute("aria-valuemax", String(max || 0));
+          bar.setAttribute("aria-valuemax", String(max || 1));
           bar.setAttribute("aria-valuenow", String(v));
           var fill = el("div", { "class": "bar-fill" });
           bar.appendChild(fill);

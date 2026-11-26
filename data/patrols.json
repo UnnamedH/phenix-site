@@ -5,17 +5,30 @@
     {
       "id": "townhall",
       "label": "Town Hall",
-      "hint": "Le coin de patrouille et sa décoration"
+      "hint": "Le coin de patrouille et sa décoration",
+      "aliases": [
+        "TH",
+        "Local",
+        "Hôtel de ville"
+      ]
     },
     {
       "id": "trophies",
       "label": "Trophies",
-      "hint": "Les signatures du Prêt"
+      "hint": "Les signatures du Prêt",
+      "aliases": [
+        "Trophy",
+        "Progression",
+        "Prêt"
+      ]
     },
     {
       "id": "esprit",
       "label": "Esprit",
-      "hint": "Noté à chaque réunion"
+      "hint": "Noté à chaque réunion",
+      "aliases": [
+        "Spirit"
+      ]
     },
     {
       "id": "c4",
