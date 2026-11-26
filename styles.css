@@ -39,6 +39,21 @@ body {
   object-fit: cover;
   object-position: 50% 30%;
   image-rendering: pixelated;
+  /* soft focus so the content stays the star; slight scale hides blurred edges */
+  filter: blur(1.5px) brightness(0.92) saturate(0.95);
+  transform: scale(1.03);
+}
+
+/* Dark veil that fades in as you scroll (opacity only, so it stays cheap) */
+.veil {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 50% 35%, transparent 30%, rgba(15, 20, 40, 0.5) 100%),
+    rgba(18, 26, 48, 0.55);
+  opacity: calc(0.12 + var(--fade, 0) * 0.88);
 }
 
 .wrap {

@@ -274,6 +274,20 @@
       "Impossible de charger le classement. Vérifiez votre connexion puis rechargez la page."));
   }
 
+  // Fade the background a little more as the page scrolls.
+  (function () {
+    var root = document.documentElement, ticking = false;
+    function update() {
+      ticking = false;
+      var f = Math.min(1, Math.max(0, window.scrollY / 500));
+      root.style.setProperty("--fade", f.toFixed(3));
+    }
+    window.addEventListener("scroll", function () {
+      if (!ticking) { ticking = true; requestAnimationFrame(update); }
+    }, { passive: true });
+    update();
+  })();
+
   paintKingdom();
   if (Art) Art.paintThrone(document.getElementById("throne-art"), null);
 
