@@ -316,7 +316,8 @@
       flags.forEach(function (f, n) {
         var dy = 0;
         for (var i = 0; i < 6; i++) {
-          dy = Math.round(Math.sin(t * 5 + i * 0.9 + n * 1.7) * 1.3 * (i / 5));
+          // sag: the free end hangs ~2px lower than the pole, with the wind ripple on top
+          dy = Math.round((i / 5) * 2 + Math.sin(t * 5 + i * 0.9 + n * 1.7) * 1.1 * (i / 5));
           out.fillStyle = f.c; out.fillRect(f.x + i, f.y + dy, 1, 4);
           out.fillStyle = "rgba(0,0,0,0.25)"; out.fillRect(f.x + i, f.y + dy + 3, 1, 1);
         }
