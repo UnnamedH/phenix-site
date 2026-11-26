@@ -32,9 +32,13 @@ body {
 /* Fixed pixel-art kingdom behind everything */
 .kingdom {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
   width: 100%;
-  height: 100%;
+  /* Size to the LARGEST viewport so it doesn't rescale when the mobile
+     address bar hides or shows while scrolling ("100%" would follow it). */
+  height: 100vh;
+  height: 100lvh;
   z-index: -1;
   object-fit: cover;
   object-position: 50% 30%;
@@ -47,7 +51,11 @@ body {
 /* Dark veil that fades in as you scroll (opacity only, so it stays cheap) */
 .veil {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  height: 100lvh;
   z-index: -1;
   pointer-events: none;
   background:
