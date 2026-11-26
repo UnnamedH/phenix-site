@@ -34,18 +34,34 @@
   }
 
   // ── Landscape ────────────────────────────────────────────────
+  function layer(w, h) {
+    var c = document.createElement("canvas");
+    c.width = w; c.height = h;
+    return c;
+  }
+
   function paintKingdom(canvas, flagColors) {
+    if (canvas._phenixStop) canvas._phenixStop();
+
     // The scene is drawn on a 400×225 stage; SKY extra rows of sky sit above it
-    // so the page title never covers the castle.
-    var W = 400, H = 225, SKY = 34;
-    canvas.width = W; canvas.height = H + SKY;
-    var ctx = canvas.getContext("2d");
-    ctx.fillStyle = "#4a8fdc";
-    ctx.fillRect(0, 0, W, SKY);
-    ctx.translate(0, SKY);
-    var T = tools(ctx), rect = T.rect, px = T.px, disc = T.disc;
+    // so the page title never covers the castle. It is painted in separate layers
+    // (sky, sun, clouds, castle & land) so the sky and flags can move.
+    var W = 400, H = 225, SKY = 34, FULL = H + SKY;
+    canvas.width = W; canvas.height = FULL;
+    var out = canvas.getContext("2d");
+    var skyL = layer(W, FULL), sunL = layer(W, FULL), sceneL = layer(W, FULL);
+    var skyCtx = skyL.getContext("2d"), sunCtx = sunL.getContext("2d"), sceneCtx = sceneL.getContext("2d");
+    skyCtx.fillStyle = "#4a8fdc";
+    skyCtx.fillRect(0, 0, W, SKY);
+    [skyCtx, sunCtx, sceneCtx].forEach(function (g) { g.translate(0, SKY); });
+
+    var rect, px, disc;
+    function use(g) { var T = tools(g); rect = T.rect; px = T.px; disc = T.disc; }
+    use(skyCtx);
     var rand = rng(7);
     var x, y;
+    var flags = [];
+    var clouds = [];
 
     // Sky: colour bands with checkerboard dithering between them.
     var sky = ["#4a8fdc", "#5a9be1", "#6ba8e6", "#7db5ea", "#90c2ee", "#a5cff1", "#bbdbf3", "#d2e7f4"];
@@ -59,20 +75,25 @@
     }
     rect(0, sky.length * band, W, H, sky[sky.length - 1]);
 
-    // Sun
+    // Sun (drawn once; its glow and rays are animated on top)
+    use(sunCtx);
     disc(338, 34, 15, "#ffe9a8");
     disc(338, 34, 12, "#fff3c4");
     disc(338, 34, 9, "#fffbe6");
 
-    // Clouds
-    function cloud(cx, cy, s) {
+    // Clouds: each is its own small sprite that drifts across the sky.
+    function cloud(cx, cy, s, speed) {
+      var cw = Math.ceil(40 * s) + 4, ch = Math.ceil(18 * s) + 6;
+      var ox = Math.ceil(cw / 2), oy = Math.ceil(9 * s) + 3;
+      var c = layer(cw, ch), t = tools(c.getContext("2d"));
       var puffs = [[0, 0, 7], [-8, 2, 5], [8, 2, 6], [-14, 4, 3], [14, 4, 4], [3, -4, 5]];
-      puffs.forEach(function (p) { disc(cx + p[0] * s, cy + p[1] * s, Math.round(p[2] * s), "#ffffff"); });
-      for (var xx = -16 * s; xx <= 16 * s; xx++) {
-        rect(cx + xx, cy + 5 * s, 1, 2, "#dbe7f2");
-      }
+      puffs.forEach(function (p) { t.disc(ox + p[0] * s, oy + p[1] * s, Math.round(p[2] * s), "#ffffff"); });
+      for (var xx = -16 * s; xx <= 16 * s; xx++) t.rect(ox + xx, oy + 5 * s, 1, 2, "#dbe7f2");
+      clouds.push({ c: c, w: cw, x: cx - ox, y: Math.round(cy - oy) + SKY, v: speed });
     }
-    cloud(62, 30, 1); cloud(170, 18, 0.8); cloud(268, 44, 1.1); cloud(390, 70, 0.7);
+    cloud(62, 30, 1, 2.6); cloud(170, 18, 0.8, 1.7); cloud(268, 44, 1.1, 3.2); cloud(390, 70, 0.7, 2.1);
+
+    use(sceneCtx);
 
     // Far mountains: overlapping triangular peaks, lit from the left, with snowcaps.
     var peaks = [[10, 70], [62, 58], [110, 76], [150, 62], [196, 74], [250, 60], [300, 72], [345, 56], [395, 68]];
@@ -153,11 +174,7 @@
       // flag
       var fy = baseY - h - 9;
       rect(cx, fy, 1, 9, "#5d4a36");
-      if (flag) {
-        rect(cx + 1, fy, 6, 4, flag);
-        rect(cx + 7, fy + 1, 1, 2, flag);
-        rect(cx + 1, fy + 3, 6, 1, "rgba(0,0,0,0.25)");
-      }
+      if (flag) flags.push({ x: cx + 1, y: fy + SKY, c: flag });
     }
     function tower(cx, topY, baseY, w, roofCol, flag) {
       bricks(cx - Math.floor(w / 2), topY, w, baseY - topY);
@@ -267,6 +284,59 @@
         px(x, y + 1, "#3f7a30");
       }
     }
+
+    // ── Animation ──
+    var halo = tools(out);
+    var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    function draw(t) {
+      out.drawImage(skyL, 0, 0);
+
+      // sun: breathing glow + twinkling rays
+      var pulse = 0.5 + 0.5 * Math.sin(t * 1.3);
+      halo.disc(338, 34 + SKY, 24, "rgba(255,244,190," + (0.05 + 0.07 * pulse).toFixed(3) + ")");
+      halo.disc(338, 34 + SKY, 19, "rgba(255,244,190," + (0.10 + 0.14 * pulse).toFixed(3) + ")");
+      out.drawImage(sunL, 0, 0);
+      for (var k = 0; k < 8; k++) {
+        if ((Math.floor(t * 1.2) + k) % 2) continue;
+        var ang = k * Math.PI / 4 + Math.PI / 8;
+        halo.rect(338 + Math.cos(ang) * 20 - 1, 34 + SKY + Math.sin(ang) * 20 - 1, 2, 2, "rgba(255,248,205,0.9)");
+      }
+
+      // clouds drift to the right and wrap around
+      clouds.forEach(function (c) {
+        var span = W + c.w;
+        var px0 = ((c.x + c.w + c.v * t) % span + span) % span - c.w;
+        out.drawImage(c.c, Math.round(px0), c.y);
+      });
+
+      out.drawImage(sceneL, 0, 0);
+
+      // flags ripple in the wind
+      flags.forEach(function (f, n) {
+        var dy = 0;
+        for (var i = 0; i < 6; i++) {
+          dy = Math.round(Math.sin(t * 5 + i * 0.9 + n * 1.7) * 1.3 * (i / 5));
+          out.fillStyle = f.c; out.fillRect(f.x + i, f.y + dy, 1, 4);
+          out.fillStyle = "rgba(0,0,0,0.25)"; out.fillRect(f.x + i, f.y + dy + 3, 1, 1);
+        }
+        out.fillStyle = f.c; out.fillRect(f.x + 6, f.y + dy + 1, 1, 2);
+      });
+    }
+
+    draw(0);
+    if (reduce) return;
+
+    var start = null, last = 0, raf = 0;
+    function frame(now) {
+      raf = requestAnimationFrame(frame);
+      if (start === null) start = now;
+      if (now - last < 80) return; // ~12 frames per second is plenty for pixel art
+      last = now;
+      draw((now - start) / 1000);
+    }
+    raf = requestAnimationFrame(frame);
+    canvas._phenixStop = function () { cancelAnimationFrame(raf); canvas._phenixStop = null; };
   }
 
   // ── Throne (48×64) ───────────────────────────────────────────
