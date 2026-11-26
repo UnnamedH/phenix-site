@@ -3,19 +3,19 @@
   "ranking": "total",
   "criteria": [
     {
-      "id": "local",
-      "label": "Local",
-      "hint": "Hôtel de ville"
+      "id": "townhall",
+      "label": "Town Hall",
+      "hint": "Le coin de patrouille et sa décoration"
     },
     {
-      "id": "progression",
-      "label": "Progression",
-      "hint": "Trophées"
+      "id": "trophies",
+      "label": "Trophies",
+      "hint": "Les signatures du Prêt"
     },
     {
       "id": "esprit",
       "label": "Esprit",
-      "hint": "Esprit de famille"
+      "hint": "Noté à chaque réunion"
     },
     {
       "id": "c4",
@@ -30,20 +30,20 @@
   ],
   "patrols": [
     {
-      "name": "Phoenixia",
-      "image": "images/phoenixia.jpg",
+      "name": "Robustina",
+      "image": "images/robustina.jpg",
       "scores": {
-        "local": 0,
-        "progression": 0,
+        "townhall": 0,
+        "trophies": 0,
         "esprit": 0
       }
     },
     {
-      "name": "Robustina",
-      "image": "images/robustina.jpg",
+      "name": "Imposina",
+      "image": "images/imposina.jpg",
       "scores": {
-        "local": 0,
-        "progression": 0,
+        "townhall": 0,
+        "trophies": 0,
         "esprit": 0
       }
     },
@@ -51,17 +51,17 @@
       "name": "Virilina",
       "image": "images/virilina.jpg",
       "scores": {
-        "local": 0,
-        "progression": 0,
+        "townhall": 0,
+        "trophies": 0,
         "esprit": 0
       }
     },
     {
-      "name": "Famille 4",
-      "image": "images/famille-4.jpg",
+      "name": "Diligina",
+      "image": "images/diligina.jpg",
       "scores": {
-        "local": 0,
-        "progression": 0,
+        "townhall": 0,
+        "trophies": 0,
         "esprit": 0
       }
     }

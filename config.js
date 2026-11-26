@@ -6,7 +6,7 @@
 // pick the tab → "Comma-separated values (.csv)" → Publish, then paste the link here.
 // The sheet must have one row per patrol. The first column is the patrol name and
 // the other column headers match the criterion ids or labels in data/patrols.json,
-// for example:  Patrouille | local | progression | esprit
+// for example:  Famille | townhall | trophies | esprit
 window.PHENIX_CONFIG = {
   SHEET_CSV_URL: ""
 };
