@@ -23,8 +23,7 @@
         "Progression",
         "Prêt"
       ],
-      "max": 100,
-      "scale": "log"
+      "max": 100
     },
     {
       "id": "esprit",
