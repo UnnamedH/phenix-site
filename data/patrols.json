@@ -49,42 +49,46 @@
     {
       "name": "Grizzly",
       "image": "images/grizzly.jpg",
+      "color": "#8a5a32",
+      "scores": {
+        "townhall": 0,
+        "trophies": 0,
+        "esprit": 0
+      },
+      "accent": "#f2f1ec"
+    },
+    {
+      "name": "Condor",
+      "image": "images/condor.jpg",
       "color": "#d83a2e",
       "scores": {
         "townhall": 0,
         "trophies": 0,
         "esprit": 0
-      }
-    },
-    {
-      "name": "Condor",
-      "image": "images/condor.jpg",
-      "color": "#8e4ec6",
-      "scores": {
-        "townhall": 0,
-        "trophies": 0,
-        "esprit": 0
-      }
+      },
+      "accent": "#f5c518"
     },
     {
       "name": "Espadon",
       "image": "images/espadon.jpg",
-      "color": "#2f7fe0",
+      "color": "#26262c",
       "scores": {
         "townhall": 0,
         "trophies": 0,
         "esprit": 0
-      }
+      },
+      "accent": "#f2f1ec"
     },
     {
       "name": "Guepard",
       "image": "images/guepard.jpg",
-      "color": "#2fa84f",
+      "color": "#f08a24",
       "scores": {
         "townhall": 0,
         "trophies": 0,
         "esprit": 0
-      }
+      },
+      "accent": "#2f7fe0"
     }
   ]
 }

@@ -62,6 +62,7 @@
     var x, y;
     var flags = [];
     var clouds = [];
+    flagColors = (flagColors || []).map(function (c) { return Array.isArray(c) ? c : [c, "#ffd24a"]; });
 
     // Sky: colour bands with checkerboard dithering between them.
     var sky = ["#4a8fdc", "#5a9be1", "#6ba8e6", "#7db5ea", "#90c2ee", "#a5cff1", "#bbdbf3", "#d2e7f4"];
@@ -174,7 +175,10 @@
       // flag
       var fy = baseY - h - 9;
       rect(cx, fy, 1, 9, "#5d4a36");
-      if (flag) flags.push({ x: cx + 1, y: fy + SKY, c: flag });
+      if (flag) {
+        var pair = Array.isArray(flag) ? flag : [flag, flag];
+        flags.push({ x: cx + 1, y: fy + SKY, c: pair[0], c2: pair[1] });
+      }
     }
     function tower(cx, topY, baseY, w, roofCol, flag) {
       bricks(cx - Math.floor(w / 2), topY, w, baseY - topY);
@@ -210,9 +214,8 @@
     // little banners on the wall
     [[165, flagColors[0]], [178, flagColors[1]], [222, flagColors[2]], [235, flagColors[3]]].forEach(function (b) {
       rect(b[0] - 1, 110, 6, 1, "#5d4a36");
-      rect(b[0], 111, 4, 8, b[1]);
-      px(b[0], 118, "rgba(0,0,0,0)");
-      rect(b[0] + 1, 113, 2, 2, "#ffd24a");
+      rect(b[0], 111, 4, 8, b[1][0]);
+      rect(b[0] + 1, 113, 2, 2, b[1][1]);
     });
 
     // ── Path from the gate ──
@@ -318,10 +321,12 @@
         for (var i = 0; i < 6; i++) {
           // sag: the free end hangs ~2px lower than the pole, with the wind ripple on top
           dy = Math.round((i / 5) * 2 + Math.sin(t * 5 + i * 0.9 + n * 1.7) * 1.1 * (i / 5));
-          out.fillStyle = f.c; out.fillRect(f.x + i, f.y + dy, 1, 4);
+          out.fillStyle = f.c; out.fillRect(f.x + i, f.y + dy, 1, 2);
+          out.fillStyle = f.c2; out.fillRect(f.x + i, f.y + dy + 2, 1, 2);
           out.fillStyle = "rgba(0,0,0,0.25)"; out.fillRect(f.x + i, f.y + dy + 3, 1, 1);
         }
-        out.fillStyle = f.c; out.fillRect(f.x + 6, f.y + dy + 1, 1, 2);
+        out.fillStyle = f.c; out.fillRect(f.x + 6, f.y + dy + 1, 1, 1);
+        out.fillStyle = f.c2; out.fillRect(f.x + 6, f.y + dy + 2, 1, 1);
       });
     }
 
@@ -341,7 +346,7 @@
   }
 
   // ── Throne (48×64) ───────────────────────────────────────────
-  function paintThrone(canvas, crestColor) {
+  function paintThrone(canvas, crestColor, accent) {
     var W = 48, H = 64;
     canvas.width = W; canvas.height = H;
     var ctx = canvas.getContext("2d");
@@ -378,7 +383,7 @@
       shield.forEach(function (row, j) {
         for (var i = 0; i < row.length; i++) {
           var ch = row[i]; if (ch === ".") continue;
-          px(20 + i, 18 + j, ch === "k" ? O : ch === "g" ? gold[1] : ch === "d" ? "rgba(0,0,0,0.35)" : crestColor);
+          px(20 + i, 18 + j, ch === "k" ? O : ch === "g" ? (accent || gold[1]) : ch === "d" ? "rgba(0,0,0,0.35)" : crestColor);
         }
       });
     }
@@ -408,7 +413,7 @@
   }
 
   // Small heraldic shield in a family colour (12×14).
-  function paintCrest(canvas, color) {
+  function paintCrest(canvas, color, accent) {
     var rows = [
       "kkkkkkkkkkkk",
       "kllllllllldk",
@@ -427,7 +432,7 @@
     ];
     canvas.width = 12; canvas.height = 14;
     var ctx = canvas.getContext("2d");
-    var pal = { k: "#2b1d14", l: "rgba(255,255,255,0.45)", c: color, d: "rgba(0,0,0,0.3)", g: "#ffd86b" };
+    var pal = { k: "#2b1d14", l: "rgba(255,255,255,0.45)", c: color, d: "rgba(0,0,0,0.3)", g: accent || "#ffd86b" };
     rows.forEach(function (row, j) {
       for (var i = 0; i < row.length; i++) {
         var ch = row[i]; if (ch === ".") continue;

@@ -26,7 +26,7 @@ If the sheet can't be reached, the site falls back to `data/patrols.json`.
 
 - `throne`: the family sitting on the throne (e.g. `"Condor"`), or `null` to keep it empty. It is set by hand on purpose: the throne goes to the family that completes all its stats.
 - `ranking`: `"total"` or `"average"` of the criteria that are not locked.
-- `patrols[].color`: each family's colour (used for its knight, banner and bars) (hex, e.g. `"#d4553f"`).
+- `patrols[].color` and `patrols[].accent`: the family's two colours (hex). `color` is the main one (shield, bars, top of its flag); `accent` is the second (shield cross, bars, bottom of its flag). Avoid pure `#000`/`#fff`: a near-black like `#26262c` and an off-white like `#f2f1ec` keep outlines and bar dividers visible.
 - `patrols[].image`: picture for each family's card (e.g. `images/phoenixia.jpg`). Square works best; it replaces the pixel knight on the family's card once the file exists.
 - `criteria[].scale` (optional): `"log"` makes a bar rise quickly at first and slow down later, so the first points already show. Only the bar changes, never the points or the ranking.
 - `criteria[].max` (optional): the score that fills a bar completely, e.g. `"max": 100`. Without it, the family with the best score in that criterion has a full bar and the others are relative to it.

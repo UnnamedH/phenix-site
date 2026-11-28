@@ -103,6 +103,7 @@
         name: String(p.name).trim(),
         image: p.image,
         color: p.color,
+        accent: p.accent,
         order: p.order,
         scores: p.scores || {},
         value: useAverage && active.length ? sum / active.length : sum
@@ -118,17 +119,20 @@
 
   var Art = window.PhenixArt;
 
-  function colorOf(p) {
-    return /^#[0-9a-f]{3}([0-9a-f]{3})?$/i.test(p.color || "") ? p.color : "#e0a526";
+  // Every family has two colours: "color" (main) and "accent" (second).
+  function hex(v, fallback) {
+    return /^#[0-9a-f]{3}([0-9a-f]{3})?$/i.test(v || "") ? v : fallback;
   }
+  function colorOf(p) { return hex(p.color, "#e0a526"); }
+  function accentOf(p) { return hex(p.accent, "#ffd86b"); }
 
   // ── Kingdom background ─────────────────────────────────────
   // Paint once with the default family colours (so the flags are there
   // immediately), then repaint with the colours from the data.
   function paintKingdom(patrols) {
     var canvas = document.getElementById("kingdom");
-    var colors = ["#d83a2e", "#8e4ec6", "#2f7fe0", "#2fa84f"];
-    (patrols || []).slice(0, 4).forEach(function (p, i) { if (p) colors[i] = colorOf(p); });
+    var colors = [["#8a5a32", "#f2f1ec"], ["#d83a2e", "#f5c518"], ["#26262c", "#f2f1ec"], ["#f08a24", "#2f7fe0"]];
+    (patrols || []).slice(0, 4).forEach(function (p, i) { if (p) colors[i] = [colorOf(p), accentOf(p)]; });
     if (Art && canvas) Art.paintKingdom(canvas, colors);
   }
 
@@ -138,7 +142,7 @@
     var holderName = String(data.throne || "").trim();
     var holder = list.filter(function (p) { return norm(p.name) === norm(holderName); })[0];
     var art = document.getElementById("throne-art");
-    if (Art) Art.paintThrone(art, holder ? colorOf(holder) : null);
+    if (Art) Art.paintThrone(art, holder ? colorOf(holder) : null, holder ? accentOf(holder) : null);
     art.setAttribute("aria-label", holder ? "Le trône royal, aux couleurs de " + holder.name : "Le trône royal, vide");
 
     var state = document.getElementById("throne");
@@ -169,7 +173,7 @@
 
   function crest(p, eager) {
     var canvas = el("canvas", { "class": "crest", "aria-hidden": "true" });
-    if (Art) Art.paintCrest(canvas, colorOf(p));
+    if (Art) Art.paintCrest(canvas, colorOf(p), accentOf(p));
     if (!p.image) return canvas;
     var img = el("img", { "class": "crest-img", src: p.image, alt: "", width: "48", height: "48", decoding: "async" });
     if (eager) img.setAttribute("fetchpriority", "high"); else img.setAttribute("loading", "lazy");
@@ -196,6 +200,7 @@
     list.forEach(function (p, i) {
       var li = el("li", { "class": "rank" });
       li.style.setProperty("--c", colorOf(p));
+      li.style.setProperty("--c2", accentOf(p));
 
       li.appendChild(el("p", { "class": "rank-num", "aria-hidden": "true" }, started ? String(p.rank) : "–"));
       li.appendChild(crest(p, i < 2));
