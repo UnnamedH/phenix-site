@@ -217,7 +217,7 @@
         row.appendChild(label);
         var v = toNumber(p.scores[c.id]);
         var max = scales[c.id];
-        row.appendChild(el("span", null, c.locked ? "Bientôt" : nf.format(v) + (c.max > 0 ? " / " + nf.format(c.max) : "")));
+        row.appendChild(el("span", null, c.locked ? "Bientôt" : nf.format(v)));
         item.appendChild(row);
         var bar = el("div", { "class": "bar" });
         if (c.locked) {

@@ -221,9 +221,10 @@ h1 {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 7rem), 1fr));
   gap: 0.5rem 1rem;
 }
-.stat-row { display: flex; justify-content: space-between; gap: 0.5rem; font-size: 0.9rem; }
-.stat-row > span:first-child { min-width: 0; overflow-wrap: anywhere; }
-.stat-row > span:last-child { white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 600; }
+.stat-row { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 0.5rem; font-size: 0.9rem; }
+/* labels break between words only; if the value does not fit it drops to the next line */
+.stat-row > span:first-child { min-width: 0; overflow-wrap: break-word; }
+.stat-row > span:last-child { margin-left: auto; white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 600; }
 .stat.locked { color: var(--ink-soft); }
 
 /* RPG-style segmented bar */
