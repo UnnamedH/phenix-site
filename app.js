@@ -131,7 +131,7 @@
   // immediately), then repaint with the colours from the data.
   function paintKingdom(patrols) {
     var canvas = document.getElementById("kingdom");
-    var colors = [["#8a5a32", "#f2f1ec"], ["#d83a2e", "#f5c518"], ["#26262c", "#f2f1ec"], ["#f08a24", "#2f7fe0"]];
+    var colors = [["#8a5a32", "#f2f1ec"], ["#d83a2e", "#f5c518"], ["#26262c", "#f2f1ec"], ["#2f7fe0", "#f08a24"]];
     (patrols || []).slice(0, 4).forEach(function (p, i) { if (p) colors[i] = [colorOf(p), accentOf(p)]; });
     if (Art && canvas) Art.paintKingdom(canvas, colors);
   }

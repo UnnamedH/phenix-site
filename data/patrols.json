@@ -82,13 +82,13 @@
     {
       "name": "Guepard",
       "image": "images/guepard.jpg",
-      "color": "#f08a24",
+      "color": "#2f7fe0",
       "scores": {
         "townhall": 0,
         "trophies": 0,
         "esprit": 0
       },
-      "accent": "#2f7fe0"
+      "accent": "#f08a24"
     }
   ]
 }
