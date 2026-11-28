@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var nf = new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 1 });
+  var nf = new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 2 });
   var df = new Intl.DateTimeFormat("fr-FR", { dateStyle: "long" });
   var tf = new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit" });
 
@@ -154,6 +154,14 @@
   // ── Ranking ────────────────────────────────────────────────
   // Bar scale per criterion: its "max" from the data file if set, otherwise the
   // best score among the families (so the leader in that criterion fills the bar).
+  // How full a bar is (0..1). "scale": "log" in the data file makes early points
+  // count for more: the first few points already fill a visible part of the bar.
+  function barFraction(c, v, max) {
+    if (!(max > 0) || v <= 0) return 0;
+    var f = c.scale === "log" ? Math.log1p(v) / Math.log1p(max) : v / max;
+    return Math.min(1, Math.max(0, f));
+  }
+
   function scaleFor(c, list) {
     if (c.max > 0) return c.max;
     return list.reduce(function (m, p) { return Math.max(m, toNumber(p.scores[c.id])); }, 0);
@@ -222,7 +230,7 @@
           bar.setAttribute("aria-valuenow", String(v));
           var fill = el("div", { "class": "bar-fill" });
           bar.appendChild(fill);
-          fills.push([fill, max > 0 ? Math.min(1, Math.max(0, v / max)) : 0]);
+          fills.push([fill, barFraction(c, v, max)]);
         }
         item.appendChild(bar);
         ul.appendChild(item);

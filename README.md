@@ -28,6 +28,7 @@ If the sheet can't be reached, the site falls back to `data/patrols.json`.
 - `ranking`: `"total"` or `"average"` of the criteria that are not locked.
 - `patrols[].color`: each family's colour (used for its knight, banner and bars) (hex, e.g. `"#d4553f"`).
 - `patrols[].image`: picture for each family's card (e.g. `images/phoenixia.jpg`). Square works best; it replaces the pixel knight on the family's card once the file exists.
+- `criteria[].scale` (optional): `"log"` makes a bar rise quickly at first and slow down later, so the first points already show. Only the bar changes, never the points or the ranking.
 - `criteria[].max` (optional): the score that fills a bar completely, e.g. `"max": 100`. Without it, the family with the best score in that criterion has a full bar and the others are relative to it.
 - `criteria`: set `"locked": false` and give a new `label` to reveal criterion 4 or 5. Locked criteria never count toward the ranking.
 - Family names in the sheet must match the names in `data/patrols.json`, because that is how each family keeps its picture.
